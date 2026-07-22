@@ -81,9 +81,8 @@ class MountebankMockManager {
 
     const imposter = response.data || {};
     if (!Array.isArray(imposter.stubs) || imposter.stubs.length === 0) {
-      throw new Error(
-        `[Mountebank] No recorded stubs found for imposter port ${this.imposterPort}`
-      );
+      logger.warn(`[Mountebank] No recorded stubs found for imposter port ${this.imposterPort}`);
+      return;
     }
 
     if (!fs.existsSync(this.mockDataDir)) {
