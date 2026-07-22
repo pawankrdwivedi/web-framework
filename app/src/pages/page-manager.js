@@ -1,10 +1,10 @@
 import { basePage } from 'qe-framework-core';
 
-class CommonPage extends basePage {
+class PageManager extends basePage {
   constructor(page) {
     super(page);
   }
 }
 
-export default CommonPage;
-export { CommonPage };
+export default PageManager;
+export { PageManager };

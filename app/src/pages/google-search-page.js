@@ -6,6 +6,7 @@ class GoogleSearchPage extends basePage {
     super(page);
     const uiConfig = configManager.getUiConfig();
     this.searchUrl = uiConfig.baseUrl || 'https://www.google.com/search?q=';
+    this.searchQuery='#APjFqb';
     
     // Locators
     // Primary is intentionally broken to trigger self-healing
@@ -19,9 +20,9 @@ class GoogleSearchPage extends basePage {
 
   async searchQuery(query) {
     logger.info(`Performing Google Search for: "${query}"`);
-    await this.fill('#APjFqb', query);
+    await this.fill(this.searchQuery, query);
     // Press Enter to submit search (more reliable than clicking the button)
-    await this.pressKey('#APjFqb', 'Enter');
+    await this.pressKey(this.searchQuery, 'Enter');
     await this.waitForNetworkIdle();
   }
 

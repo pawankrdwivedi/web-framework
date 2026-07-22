@@ -40,7 +40,9 @@ class MountebankMockManager {
     this.mockDataDir = options.mockDataDir || resolveFromAppRoot('test_mock');
     this.imposterFilePath =
       options.imposterFilePath ||
-      path.join(this.mockDataDir, `mountebank-imposter-${this.activeScenario}.json`);
+      //path.join(this.mockDataDir, `mountebank-imposter-${this.activeScenario}.json`);
+      path.join(this.mockDataDir, `${this.activeScenario}.json`);
+    logger.info(`[Mountebank] Configured with mode: ${this.mode}, target: ${this.targetBaseUrl}, imposter port: ${this.imposterPort}`);
   }
 
   async init() {
