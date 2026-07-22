@@ -1,0 +1,7 @@
+/node_modules
+/test_logs
+/test_results
+src/test_data_mock_data
+package-lock.json
+mb*.*
+*.tgz

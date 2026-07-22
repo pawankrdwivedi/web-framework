@@ -1,0 +1,13 @@
+ui:
+  baseUrl: https://parabank.parasoft.com/parabank/index.htm
+  userName: automation_test
+  password: automation123
+api:
+  baseUrl: https://parabank.parasoft.com/parabank/api
+database:
+  host: localhost
+  port: 5432
+  username: test
+  password: [PASSWORD]
+  name: automation_qa
+  type: postgres  

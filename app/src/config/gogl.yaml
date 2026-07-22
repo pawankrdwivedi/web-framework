@@ -1,0 +1,4 @@
+ui:
+  baseUrl: https://www.google.co.in
+api:
+  baseUrl: https://www.google.co.in/api

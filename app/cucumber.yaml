@@ -1,0 +1,12 @@
+default:
+  import:
+    - "src/step-definitions/**/*.js"
+    - "src/support/**/*.js"
+  format:
+    - "summary"
+    - "html:test_results/reports/cucumber-report.html"
+    - "allure-cucumberjs/reporter"
+  formatOptions:
+    resultsDir: "test_results/allure-results"
+  parallel: 1
+  dryRun: false

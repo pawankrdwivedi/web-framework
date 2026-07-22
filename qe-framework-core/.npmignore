@@ -1,0 +1,16 @@
+# Exclude all source folders
+ai/
+api/
+assertions/
+browser/
+cli/
+config/
+data/
+db/
+etl/
+logger/
+mock/
+pages/
+reporting/
+index.js
+node_modules/
