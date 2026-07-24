@@ -132,24 +132,53 @@ class MountebankMockManager {
   }
 
   loadPlaybackImposterPayload() {
-    if (!this.imposterFilePath || !fs.existsSync(this.imposterFilePath)) {
-      throw new Error(
-        `[Mountebank] Playback imposter file not found: ${this.imposterFilePath}`
-      );
+    let combinedStubs = [];
+    if (fs.existsSync(this.mockDataDir)) {
+      const files = fs.readdirSync(this.mockDataDir).filter(f => f.startsWith('imposter-') && f.endsWith('.json'));
+      for (const file of files) {
+        try {
+          const filePath = path.join(this.mockDataDir, file);
+          const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+          if (data && Array.isArray(data.stubs)) {
+            combinedStubs.push(...data.stubs);
+          }
+        } catch (e) {
+          logger.warn(`[Mountebank] Failed to load imposter file ${file}: ${e.message}`);
+        }
+      }
     }
 
-    const data = JSON.parse(fs.readFileSync(this.imposterFilePath, 'utf8'));
-    if (!data || !Array.isArray(data.stubs) || data.stubs.length === 0) {
+    if (this.targetBaseUrl) {
+      combinedStubs.push({
+        responses: [
+          {
+            proxy: {
+              to: this.targetBaseUrl,
+              mode: 'proxyTransparent',
+              predicateGenerators: [
+                {
+                  matches: {
+                    method: true,
+                    path: true,
+                    query: true,
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      });
+    } else if (combinedStubs.length === 0) {
       throw new Error(
-        `[Mountebank] Invalid imposter payload in file: ${this.imposterFilePath}`
+        `[Mountebank] No imposter stubs found in ${this.mockDataDir} and no targetBaseUrl provided for fallback proxy.`
       );
     }
 
     return {
-      ...data,
       protocol: this.protocol,
       port: this.imposterPort,
-      name: data.name || `playback-${this.activeScenario}`,
+      name: `playback-combined`,
+      stubs: combinedStubs,
     };
   }
 

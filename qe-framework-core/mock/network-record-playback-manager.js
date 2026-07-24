@@ -38,6 +38,9 @@ class NetworkRecordPlaybackManager {
       process.env.MOCK_MOUNTEBANK_TARGET_URL || execConfig.mockMountebankTargetUrl || execConfig.MOCK_MOUNTEBANK_TARGET_URL || null;
     const mockInterceptPattern = 
       process.env.MOCK_INTERCEPT_PATTERN || execConfig.mockInterceptPattern || execConfig.MOCK_INTERCEPT_PATTERN || '**/api/**';
+    
+    const skipEndpointsStr = process.env.MOCK_SKIP_ENDPOINTS || execConfig.mockSkipEndpoints || execConfig.MOCK_SKIP_ENDPOINTS || '';
+    this._mockSkipEndpoints = skipEndpointsStr.split(',').map(s => s.trim()).filter(s => s);
 
     this._mountebankImposterPort = mountebankImposterPort;
     this._mockInterceptPattern = mockInterceptPattern;
@@ -117,16 +120,21 @@ class NetworkRecordPlaybackManager {
     } else if (this._mode === 'record' && _page) {
       logger.info(`[Mock] Setting up native Playwright recording for '${this._mockInterceptPattern}'`);
       
-      await _page.route(this._mockInterceptPattern, async (route) => {
+      _page.on('response', async (response) => {
         try {
-          const request = route.request();
+          const request = response.request();
           
           if (!['fetch', 'xhr'].includes(request.resourceType())) {
-            return route.continue();
+            return;
           }
 
           const requestUrl = new URL(request.url());
-          const response = await route.fetch();
+          
+          const shouldSkip = this._mockSkipEndpoints.some(skipPattern => requestUrl.pathname.includes(skipPattern));
+          if (shouldSkip) {
+            logger.debug(`[Mock] Skipping recording for: ${requestUrl.pathname}`);
+            return;
+          }
           
           let responseBody = '';
           try {
@@ -139,6 +147,12 @@ class NetworkRecordPlaybackManager {
           const responseHeaders = response.headers();
           // Filter out hop-by-hop or dynamic headers to keep stubs clean
           delete responseHeaders['content-encoding'];
+
+          const contentType = responseHeaders['content-type'] || '';
+          if (!contentType.toLowerCase().includes('charset=utf-8')) {
+            logger.debug(`[Mock] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
+            return;
+          }
 
           this._nativeRecordedStubs.push({
             predicates: [
@@ -157,10 +171,8 @@ class NetworkRecordPlaybackManager {
           });
 
           logger.debug(`[Mock] Native recorded: ${request.method()} ${requestUrl.pathname}`);
-          await route.fulfill({ response });
         } catch (err) {
           logger.error(`[Mock] Failed to record request: ${err.message}`);
-          await route.continue();
         }
       });
     }
@@ -168,18 +180,65 @@ class NetworkRecordPlaybackManager {
 
   async saveRecordedMocks() {
     if (this._mode === 'record') {
-      const imposterPayload = {
-        protocol: 'http',
-        port: Number(this._mountebankImposterPort),
-        name: `record-${this._activeScenario}`,
-        recordRequests: false,
-        stubs: this._nativeRecordedStubs
-      };
-
       try {
-        await fs.mkdir(resolveFromAppRoot('test_mock'), { recursive: true });
-        await fs.writeFile(this._imposterFilePath, JSON.stringify(imposterPayload, null, 2));
-        logger.info(`[Mock] Natively recorded mocks saved to ${this._imposterFilePath}`);
+        const mockDataDir = resolveFromAppRoot('test_mock');
+        await fs.mkdir(mockDataDir, { recursive: true });
+
+        // Group stubs by the last segment of the path
+        const stubsBySegment = {};
+        for (const stub of this._nativeRecordedStubs) {
+          const pathPredicate = stub.predicates.find(p => p.deepEquals && p.deepEquals.path);
+          if (!pathPredicate) continue;
+          const reqPath = pathPredicate.deepEquals.path;
+          
+          // Get last segment
+          const segments = reqPath.split('/').filter(s => s);
+          const segment = segments.length > 0 ? segments[segments.length - 1] : 'root';
+          
+          if (!stubsBySegment[segment]) {
+            stubsBySegment[segment] = [];
+          }
+          stubsBySegment[segment].push(stub);
+        }
+
+        for (const [segment, stubs] of Object.entries(stubsBySegment)) {
+          const filePath = resolveFromAppRoot('test_mock', `imposter-${segment}.json`);
+          let existingData = {
+            protocol: 'http',
+            port: Number(this._mountebankImposterPort),
+            name: `record-${segment}`,
+            recordRequests: false,
+            stubs: []
+          };
+
+          try {
+            const fileContent = await fs.readFile(filePath, 'utf8');
+            existingData = JSON.parse(fileContent);
+          } catch (e) {
+            // File doesn't exist or is invalid, use default
+          }
+
+          // Merge stubs - replace existing stub if method and path match
+          for (const newStub of stubs) {
+            const newMethod = newStub.predicates.find(p => p.deepEquals && p.deepEquals.method)?.deepEquals.method;
+            const newPath = newStub.predicates.find(p => p.deepEquals && p.deepEquals.path)?.deepEquals.path;
+            
+            const existingIndex = existingData.stubs.findIndex(existingStub => {
+              const existingMethod = existingStub.predicates?.find(p => p.deepEquals && p.deepEquals.method)?.deepEquals.method;
+              const existingPath = existingStub.predicates?.find(p => p.deepEquals && p.deepEquals.path)?.deepEquals.path;
+              return existingMethod === newMethod && existingPath === newPath;
+            });
+
+            if (existingIndex >= 0) {
+              existingData.stubs[existingIndex] = newStub;
+            } else {
+              existingData.stubs.push(newStub);
+            }
+          }
+
+          await fs.writeFile(filePath, JSON.stringify(existingData, null, 2));
+          logger.info(`[Mock] Natively recorded mocks saved to ${filePath}`);
+        }
       } catch (err) {
         logger.error(`[Mock] Failed to save recorded mocks: ${err.message}`);
       }
