@@ -5,7 +5,7 @@ function sanitizeScenarioName(scenarioName) {
   return String(scenarioName || 'global').replace(/[^a-z0-9]/gi, '_').toLowerCase();
 }
 
-class MontebankServer {
+class MountebankServer {
   constructor() {
     this.manager = null;
     this.mode = null;
@@ -52,7 +52,7 @@ class MontebankServer {
 
     this.manager = manager;
     this.mode = 'playback';
-    logger.info(`[MontebankServer] Playback started on http://127.0.0.1:${imposterPort}`);
+    logger.info(`[Moconst scenariontebankServer] Playback started on http://127.0.0.1:${imposterPort}`);
     return { imposterBaseUrl: `http://127.0.0.1:${imposterPort}`, imposterFilePath };
   }
 
@@ -112,6 +112,6 @@ class MontebankServer {
   }
 }
 
-const montebankServer = new MontebankServer();
-export default montebankServer;
-export { MontebankServer };
+const mountebankServer = new MountebankServer();
+export default mountebankServer;
+export { MountebankServer };

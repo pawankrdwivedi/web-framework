@@ -2,7 +2,7 @@ import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@
 import fs from 'fs';
 import path from 'path';
 import { browserManager, dbClient, logger, configManager, allureReporter, softAssert, componentTestHelper } from 'qe-framework-core';
-import montebankServer from './montebank-server.js';
+import mountebankServer from './mountebank-server.js';
 
 const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
 logger.info(`appRoot: ${appRoot}`);
@@ -17,7 +17,7 @@ const MOCK_ENV_KEYS = [
 ];
 
 function captureMockEnv() {
-  const snapshot = {};
+  const snapshot = {};  
   for (const key of MOCK_ENV_KEYS) {
     snapshot[key] = process.env[key];
   }
@@ -145,8 +145,8 @@ After(async function (scenario) {
 
   }
 
-  if (this.usesMontebankServer) {
-    await montebankServer.stop(this.persistMontebankRecording === true);
+  if (this.usesMountebankServer) {
+    await mountebankServer.stop(this.persistMountebankRecording === true);
   }
 
   if (this.originalMockEnv) {

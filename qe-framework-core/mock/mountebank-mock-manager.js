@@ -22,7 +22,7 @@ class MountebankMockManager {
   }
 
   get adminBaseUrl() {
-    return `http://${this.adminHost}:${this.adminPort}`;
+    return `${this.protocol}://${this.adminHost}:${this.adminPort}`;
   }
 
   configure(options = {}) {
@@ -41,7 +41,7 @@ class MountebankMockManager {
     this.imposterFilePath =
       options.imposterFilePath ||
       //path.join(this.mockDataDir, `mountebank-imposter-${this.activeScenario}.json`);
-      path.join(this.mockDataDir, `${this.activeScenario}.json`);
+      path.join(this.mockDataDir, `imposter-${this.activeScenario}.json`);
     logger.info(`[Mountebank] Configured with mode: ${this.mode}, target: ${this.targetBaseUrl}, imposter port: ${this.imposterPort}`);
   }
 
