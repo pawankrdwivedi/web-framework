@@ -161,7 +161,7 @@ After(async function (scenario) {
   if (shouldAttachScreenshot) {
     const screenshotPath = path.join(
       appRoot,
-      'test_results',
+      'test-results',
       'reports',
       'screenshots',
       `${sanitizedScenarioName}_failed.png`
@@ -202,7 +202,7 @@ After(async function (scenario) {
   if (shouldAttachTrace) {
     const tracePath = path.join(
       appRoot,
-      'test_results',
+      'test-results',
       'reports',
       'traces',
       `${sanitizedScenarioName}_trace.zip`

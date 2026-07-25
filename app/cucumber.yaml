@@ -4,9 +4,9 @@ default:
     - "src/support/**/*.js"
   format:
     - "summary"
-    - "html:test_results/reports/cucumber-report.html"
+    - "html:test-results/reports/cucumber-report.html"
     - "allure-cucumberjs/reporter"
   formatOptions:
-    resultsDir: "test_results/allure-results"
+    resultsDir: "test-results/allure-results"
   parallel: 1
   dryRun: false

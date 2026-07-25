@@ -53,7 +53,7 @@ class BrowserManager {
     const cdpEndpoint = `http://127.0.0.1:${debugPort}`;
     const execConfig = configManager.getExecutionConfig();
     const headless = execConfig.headless !== undefined ? execConfig.headless : true;
- 
+
     try {
       logger.info(`Attempting to connect to locally installed Chrome at ${cdpEndpoint}`);
       this.browser = await chromium.connectOverCDP(cdpEndpoint);
@@ -62,12 +62,12 @@ class BrowserManager {
     } catch (error) {
       logger.warn(`Failed to connect to Chrome at ${cdpEndpoint}: ${error.message}`);
       logger.info('Attempting to launch Chrome with remote debugging port...');
-      
+
       try {
         await this.startChromeWithRemoteDebugging(debugPort, headless);
         // Wait a moment for Chrome to start
         await new Promise(resolve => setTimeout(resolve, 2000));
-        
+
         this.browser = await chromium.connectOverCDP(cdpEndpoint);
         logger.info('Successfully launched and connected to Chrome via remote debugging');
         return this.browser;
@@ -85,12 +85,12 @@ class BrowserManager {
   async startChromeWithRemoteDebugging(debugPort, headless = true) {
     return new Promise((resolve, reject) => {
       const chromeExecutable = process.env.CHROME_EXECUTABLE_PATH || this.findChromeExecutable();
-      
+
       if (!chromeExecutable) {
         reject(new Error('Chrome executable not found'));
         return;
       }
- 
+
       const tempUserDataDir = path.join(os.tmpdir(), `playwright_chrome_profile_${debugPort}`);
       const args = [
         `--remote-debugging-port=${debugPort}`,
@@ -119,7 +119,7 @@ class BrowserManager {
 
       // Unref the process so Node doesn't wait for it
       chromeProcess.unref();
-      
+
       logger.info('Chrome process started with remote debugging enabled');
       resolve();
     });
@@ -211,7 +211,7 @@ class BrowserManager {
     const contextOptions = {
       viewport: { width, height },
       recordVideo: execConfig.video === 'on' || execConfig.video === 'retain-on-failure' ? {
-        dir: path.join(process.cwd(), 'test_results', 'reports', 'videos'),
+        dir: path.join(process.cwd(), 'test-results', 'reports', 'videos'),
         size: { width, height },
       } : undefined,
     };
@@ -246,7 +246,7 @@ class BrowserManager {
         try {
           const screenshotPath = path.join(
             process.cwd(),
-            'test_results',
+            'test-results',
             'reports',
             'screenshots',
             `${sanitizedScenarioName}_failed.png`
@@ -263,7 +263,7 @@ class BrowserManager {
         try {
           const tracePath = path.join(
             process.cwd(),
-            'test_results',
+            'test-results',
             'reports',
             'traces',
             `${sanitizedScenarioName}_trace.zip`
@@ -362,7 +362,7 @@ class BrowserManager {
 
   logSelfHealingAction(broken, fixed) {
     // Previously this method wrote self-healing anomalies to a file under
-    // `test_logs/self_healing_anomalies.json`. Per request, stop writing
+    // `test-logs/self_healing_anomalies.json`. Per request, stop writing
     // to disk and instead emit the anomaly to the framework logger.
     const anomaly = {
       timestamp: new Date().toISOString(),

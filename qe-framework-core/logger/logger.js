@@ -57,7 +57,7 @@ console.warn = wrapConsole(originalWarn);
 // Prepare logs directory only when file logging is enabled
 let logDirectory;
 if (!disableFileLogging) {
-  logDirectory = path.join(process.cwd(), 'test_logs');
+  logDirectory = path.join(process.cwd(), 'test-logs');
   if (!fs.existsSync(logDirectory)) {
     fs.mkdirSync(logDirectory, { recursive: true });
   }

@@ -1,6 +1,6 @@
 /node_modules
-/test_logs
-/test_results
+/test-logs
+/test-results
 /test-mock/
 package-lock.json
 mb*.*

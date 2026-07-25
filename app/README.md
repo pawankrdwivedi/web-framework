@@ -45,8 +45,8 @@ It is structured to enforce a strict separation of concerns, featuring a generic
 │   ├── test/                   # Playwright Spec hybrid POM tests
 │   └── test-data/              # Dynamic Excel spreadsheets & ETL source files
 ├── docs/                       # Project documentation & guides
-├── test_logs/                  # Dynamic execution and self-healing anomaly logs
-├── test_results/               # Automated test results (screenshots, traces, videos, and reports)
+├── test-logs/                  # Dynamic execution and self-healing anomaly logs
+├── test-results/               # Automated test results (screenshots, traces, videos, and reports)
 ├── .env                        # Common default execution configurations
 ├── cucumber.yaml               # Cucumber execution configuration
 ├── package.json                # Project dependencies and scripts
@@ -769,14 +769,14 @@ Specify target environments using the `TEST_ENV` environment variable:
 
 After executing tests, you can inspect execution results using various options:
 
-* **Playwright HTML Report**: Open `test_results/reports/playwright-html/index.html` directly in any web browser.
-* **Cucumber HTML Report**: Open `test_results/reports/cucumber-report.html` directly in any web browser.
+* **Playwright HTML Report**: Open `test-results/reports/playwright-html/index.html` directly in any web browser.
+* **Cucumber HTML Report**: Open `test-results/reports/cucumber-report.html` directly in any web browser.
 * **Allure Report**:
   ```bash
   # Automatically compiles and displays Allure trend reports
   npm run allure
   ```
-* **Playwright Traces**: Go to `https://trace.playwright.dev/` and upload any trace `.zip` file from `test_results/reports/traces/` to visually step through the execution.
+* **Playwright Traces**: Go to `https://trace.playwright.dev/` and upload any trace `.zip` file from `test-results/reports/traces/` to visually step through the execution.
 
 ---
 
@@ -867,8 +867,8 @@ run_bdd_tests:
   artifacts:
     when: always
     paths:
-      - test_results/
-      - test_logs/
+      - test-results/
+      - test-logs/
     expire_in: 7 days
 
 run_pom_tests:
@@ -879,8 +879,8 @@ run_pom_tests:
   artifacts:
     when: always
     paths:
-      - test_results/
-      - test_logs/
+      - test-results/
+      - test-logs/
     expire_in: 7 days
 
 generate_allure_report:
@@ -894,6 +894,6 @@ generate_allure_report:
   artifacts:
     when: always
     paths:
-      - test_results/reports/allure-report/
+      - test-results/reports/allure-report/
     expire_in: 30 days
 ```

@@ -42,12 +42,12 @@ class MountebankMockManager {
       options.imposterFilePath ||
       //path.join(this.mockDataDir, `mountebank-imposter-${this.activeScenario}.json`);
       path.join(this.mockDataDir, `imposter-${this.activeScenario}.json`);
-    logger.info(`[Mountebank] Configured with mode: ${this.mode}, target: ${this.targetBaseUrl}, imposter port: ${this.imposterPort}`);
+    logger.info(`[API Mocking] Configured with mode: ${this.mode}, target: ${this.targetBaseUrl}, imposter port: ${this.imposterPort}`);
   }
 
   async init() {
     if (!this.mode) {
-      throw new Error('[Mountebank] mode must be configured as "record" or "playback".');
+      throw new Error('[API Mocking] mode must be configured as "record" or "playback".');
     }
 
     await this.startMockServer();
@@ -56,18 +56,18 @@ class MountebankMockManager {
     if (this.mode === 'record') {
       const imposter = this.buildRecordImposterPayload();
       await this.createImposter(imposter);
-      logger.info(`[Mountebank] Record imposter created on port ${this.imposterPort}`);
+      logger.info(`[API Mocking] Record imposter created on port ${this.imposterPort}`);
       return;
     }
 
     if (this.mode === 'playback') {
       const imposter = this.loadPlaybackImposterPayload();
       await this.createImposter(imposter);
-      logger.info(`[Mountebank] Playback imposter created on port ${this.imposterPort}`);
+      logger.info(`[API Mocking] Playback imposter created on port ${this.imposterPort}`);
       return;
     }
 
-    throw new Error(`[Mountebank] Unsupported mode: ${this.mode}`);
+    throw new Error(`[API Mocking] Unsupported mode: ${this.mode}`);
   }
 
   async saveRecordedMocks() {
@@ -83,7 +83,7 @@ class MountebankMockManager {
 
     const imposter = response.data || {};
     if (!Array.isArray(imposter.stubs) || imposter.stubs.length === 0) {
-      logger.warn(`[Mountebank] No recorded stubs found for imposter port ${this.imposterPort}`);
+      logger.warn(`[API Mocking] No recorded stubs found for imposter port ${this.imposterPort}`);
       return;
     }
 
@@ -92,13 +92,13 @@ class MountebankMockManager {
     }
 
     fs.writeFileSync(this.imposterFilePath, JSON.stringify(imposter, null, 2));
-    logger.info(`[Mountebank] Recorded stubs saved to ${this.imposterFilePath}`);
+    logger.info(`[API Mocking] Recorded stubs saved to ${this.imposterFilePath}`);
   }
 
   buildRecordImposterPayload() {
     if (!this.targetBaseUrl) {
       throw new Error(
-        '[Mountebank] targetBaseUrl is required for record mode (MOCK_MOUNTEBANK_TARGET_URL).'
+        '[API Mocking] targetBaseUrl is required for record mode (MOCK_MOUNTEBANK_TARGET_URL).'
       );
     }
 
@@ -143,7 +143,7 @@ class MountebankMockManager {
             combinedStubs.push(...data.stubs);
           }
         } catch (e) {
-          logger.warn(`[Mountebank] Failed to load imposter file ${file}: ${e.message}`);
+          logger.warn(`[API Mocking] Failed to load imposter file ${file}: ${e.message}`);
         }
       }
     }
@@ -170,7 +170,7 @@ class MountebankMockManager {
       });
     } else if (combinedStubs.length === 0) {
       throw new Error(
-        `[Mountebank] No imposter stubs found in ${this.mockDataDir} and no targetBaseUrl provided for fallback proxy.`
+        `[API Mocking] No imposter stubs found in ${this.mockDataDir} and no targetBaseUrl provided for fallback proxy.`
       );
     }
 
@@ -184,7 +184,7 @@ class MountebankMockManager {
     };
   }
 
-  
+
 
   async createImposter(imposterPayload) {
     await axios.post(`${this.adminBaseUrl}/imposters`, imposterPayload, {
@@ -197,7 +197,7 @@ class MountebankMockManager {
       await axios.delete(`${this.adminBaseUrl}/imposters/${imposterPort}`, {
         timeout: 10000,
       });
-      logger.info(`[Mountebank] Deleted imposter on port ${imposterPort}`);
+      logger.info(`[API Mocking] Deleted imposter on port ${imposterPort}`);
     } catch (err) {
       if (err.response && err.response.status === 404) return;
       throw err;
@@ -216,7 +216,7 @@ class MountebankMockManager {
     const isRunning = await this.isServerRunning();
     if (isRunning) {
       logger.info(
-        `[Mountebank] Reusing existing server at ${this.adminHost}:${this.adminPort}`
+        `[API Mocking] Reusing existing server at ${this.adminHost}:${this.adminPort}`
       );
       return;
     }
@@ -246,17 +246,17 @@ class MountebankMockManager {
     this._ownsMbProcess = true;
 
     this._mbProcess.stdout.on('data', (chunk) => {
-      logger.debug(`[Mountebank] ${String(chunk).trim()}`);
+      logger.debug(`[API Mocking] ${String(chunk).trim()}`);
     });
     this._mbProcess.stderr.on('data', (chunk) => {
-      logger.warn(`[Mountebank] ${String(chunk).trim()}`);
+      logger.warn(`[API Mocking] ${String(chunk).trim()}`);
     });
 
     const serverStartTimeoutMs = process.platform === 'win32' ? 120000 : 30000;
     await this.waitForServer(serverStartTimeoutMs);
     this.registerExitHook();
     logger.info(
-      `[Mountebank] Server started at ${this.adminHost}:${this.adminPort}`
+      `[API Mocking] Server started at ${this.adminHost}:${this.adminPort}`
     );
   }
 
@@ -285,7 +285,7 @@ class MountebankMockManager {
       await new Promise((resolve) => setTimeout(resolve, intervalMs));
     }
     throw new Error(
-      `[Mountebank] Server did not start within ${timeoutMs}ms on ${this.adminHost}:${this.adminPort}`
+      `[API Mocking] Server did not start within ${timeoutMs}ms on ${this.adminHost}:${this.adminPort}`
     );
   }
 

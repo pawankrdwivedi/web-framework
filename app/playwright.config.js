@@ -79,7 +79,7 @@ const browserMap = {
 const targetBrowser = (execConfig.browser || 'chromium').toLowerCase();
 const activeProject = browserMap[targetBrowser] || browserMap.chromium;
 
-const resultsDir = path.join(baseAppPath, 'test_results');
+const resultsDir = path.join(baseAppPath, 'test-results');
 const timeout = parseNumber(execConfig.timeout, 90000);
 const retries = parseNumber(execConfig.retry, 0);
 const workers = parseNumber(execConfig.parallel, 0);

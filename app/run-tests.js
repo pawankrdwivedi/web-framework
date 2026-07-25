@@ -90,8 +90,8 @@ console.log(`[Runner] Targeting Environment: ${env ? env.toUpperCase() : 'NONE'}
 console.log(`[Runner] Targeting Application: ${application ? application.toUpperCase() : 'NONE'}`);
 
 // Clean previous Allure results to avoid combined reports from previous executions
-const resultsDir = 'test_results';
-const logsDir = 'test_logs';
+const resultsDir = 'test-results';
+const logsDir = 'test-logs';
 
 const allureResultsPath = path.join(appRoot, resultsDir, 'allure-results');
 if (fs.existsSync(allureResultsPath)) {
@@ -144,7 +144,7 @@ const supportDir = path.relative(currentDir, path.join(appRoot, 'src', 'support'
 // CLI paths (relative to the app root when the runner spawns the test processes with cwd=appRoot)
 const stepDefinitionsCli = path.posix.join('src', 'step-definitions');
 const supportDirCli = path.posix.join('src', 'support');
-const normalizePath = value => value.replace(/\\/g, '/').replace(/\/+$/,'');
+const normalizePath = value => value.replace(/\\/g, '/').replace(/\/+$/, '');
 // When running tests, the test runner's working directory is set to the app root.
 // Use the app-root relative path for feature discovery passed to the test CLIs.
 const normalizedFeaturesDir = 'src/features';
@@ -288,10 +288,10 @@ function expandFeatureExamplesFromExcel(featurePath, workbook) {
       const selectedRows = testCaseIds.length === 1
         ? rows
         : rows.filter(row =>
-            testCaseIds.some(id =>
-              String(row.TestCaseID || row.testCaseId || row.testcaseid || '').trim().toLowerCase() === String(id).toLowerCase()
-            )
-          );
+          testCaseIds.some(id =>
+            String(row.TestCaseID || row.testCaseId || row.testcaseid || '').trim().toLowerCase() === String(id).toLowerCase()
+          )
+        );
 
       if (selectedRows.length === 0) return match;
       return `${examplesLine}${formatExamplesTable(selectedRows)}\n`;
@@ -349,7 +349,7 @@ const normalizedExecutionFeaturesDir = normalizePath(executionFeaturesDir);
 const executionFeatureGlob = `${normalizedExecutionFeaturesDir}/**/*.feature`;
 
 if (!cucumberArgs.some(arg => arg.endsWith('.feature') || normalizePath(arg).startsWith(`${normalizedFeaturesDir}/`))) {
-    defaultArgs.push(executionFeatureGlob);
+  defaultArgs.push(executionFeatureGlob);
 }
 
 const finalArgs = [...defaultArgs, ...cucumberArgs];

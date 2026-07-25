@@ -1,6 +1,6 @@
 {
   "name": "qe-framework-core",
-  "version": "1.0.27",
+  "version": "1.0.31",
   "description": "Enterprise-grade scalable BDD/Playwright test automation core framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -15,7 +15,6 @@
     "pack": "npm run build && npm pack",
     "test:mountebank": "node test/run-tests-mountebank.js"
   },
-
   "peerDependencies": {
     "@cucumber/cucumber": "^10.6.0",
     "@faker-js/faker": "^8.4.1",

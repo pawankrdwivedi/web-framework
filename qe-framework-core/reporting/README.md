@@ -160,7 +160,7 @@ See [ALLURE_REPORTING_GUIDE.md](../ALLURE_REPORTING_GUIDE.md) for detailed API d
 
 **Environment properties missing?**
 - Run: `npm run allure:generate`
-- Check `test_results/allure-results/environment.properties` exists
+- Check `test-results/allure-results/environment.properties` exists
 
 **No report generated?**
 - Run: `npm test` to execute tests first

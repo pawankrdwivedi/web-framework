@@ -20,7 +20,7 @@
     "test:all": "npm run test:cucumber && npm run test:playwright",
     "allure:generate": "node generate-allure.js",
     "allure:pdf": "node generate-allure.js",
-    "allure:open": "allure open test_results/reports/allure-report",
+    "allure:open": "allure open test-results/reports/allure-report",
     "allure": "npm run allure:generate && npm run allure:open",
     "lint": "eslint . --ext .js"
   },
@@ -39,7 +39,7 @@
     "pdf-parse": "^1.1.1",
     "pg": "^8.12.0",
     "playwright": "^1.44.1",
-    "qe-framework-core": "file:qe-framework-core-1.0.27.tgz",
+    "qe-framework-core": "file:qe-framework-core-1.0.31.tgz",
     "tedious": "^18.2.0",
     "winston": "^3.13.0",
     "xlsx": "^0.18.5"

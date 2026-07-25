@@ -3,23 +3,46 @@ import { resolveFromAppRoot } from '../utils/path-resolver.js';
 import configManager from '../config/config-manager.js';
 import MountebankMockManager from './mountebank-mock-manager.js';
 import fs from 'fs/promises';
+import crypto from 'crypto';
+import path from 'path';
 
 /**
- * API record/playback coordinator using Mountebank only.
+ * API record/playback coordinator using Hybrid Proxy Mocking Architecture.
  */
 class NetworkRecordPlaybackManager {
   constructor() {
     this._mountebankManager = null;
     this._mode = null;
-    this._nativeRecordedStubs = [];
-    this._imposterFilePath = null;
     this._activeScenario = null;
-    this._mountebankImposterPort = 4545;
+    this._mockDataDir = null;
+    this._writeQueue = new Map();
+  }
+
+  _generateMockKey(method, urlObj) {
+    const methodPart = method.toUpperCase();
+    let pathPart = urlObj.pathname.replace(/\//g, '_');
+    if (pathPart.startsWith('_')) {
+      pathPart = pathPart.substring(1);
+    }
+    if (pathPart.endsWith('_')) {
+      pathPart = pathPart.substring(0, pathPart.length - 1);
+    }
+
+    return `${methodPart}_${pathPart}`;
+  }
+
+  async _ensureMockDir() {
+    if (this._mockDataDir) {
+      try {
+        await fs.mkdir(this._mockDataDir, { recursive: true });
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   async init(_page, scenarioName = 'global') {
     this._mountebankManager = null;
-    this._nativeRecordedStubs = [];
 
     const execConfig = configManager.getExecutionConfig() || {};
     const enableMountebank =
@@ -28,73 +51,42 @@ class NetworkRecordPlaybackManager {
       String(process.env.MOCK_MOUNTEBANK_RECORD || execConfig.mockMountebankRecord || execConfig.MOCK_MOUNTEBANK_RECORD || 'false') === 'true';
     const mountebankPlayback =
       String(process.env.MOCK_MOUNTEBANK_PLAYBACK || execConfig.mockMountebankPlayback || execConfig.MOCK_MOUNTEBANK_PLAYBACK || 'false') === 'true';
-    const mountebankAdminHost =
-      process.env.MOCK_MOUNTEBANK_ADMIN_HOST || execConfig.mockMountebankAdminHost || execConfig.MOCK_MOUNTEBANK_ADMIN_HOST || '127.0.0.1';
-    const mountebankAdminPort =
-      process.env.MOCK_MOUNTEBANK_ADMIN_PORT || execConfig.mockMountebankAdminPort || execConfig.MOCK_MOUNTEBANK_ADMIN_PORT || 2525;
-    const mountebankImposterPort =
-      process.env.MOCK_MOUNTEBANK_IMPOSTER_PORT || execConfig.mockMountebankImposterPort || execConfig.MOCK_MOUNTEBANK_IMPOSTER_PORT || 4545;
-    const mountebankTargetUrl =
-      process.env.MOCK_MOUNTEBANK_TARGET_URL || execConfig.mockMountebankTargetUrl || execConfig.MOCK_MOUNTEBANK_TARGET_URL || null;
-    const mockInterceptPattern = 
+    const mockInterceptPattern =
       process.env.MOCK_INTERCEPT_PATTERN || execConfig.mockInterceptPattern || execConfig.MOCK_INTERCEPT_PATTERN || '**/api/**';
-    
+
     const skipEndpointsStr = process.env.MOCK_SKIP_ENDPOINTS || execConfig.mockSkipEndpoints || execConfig.MOCK_SKIP_ENDPOINTS || '';
     this._mockSkipEndpoints = skipEndpointsStr.split(',').map(s => s.trim()).filter(s => s);
 
-    this._mountebankImposterPort = mountebankImposterPort;
     this._mockInterceptPattern = mockInterceptPattern;
 
     if (!enableMountebank) {
       return;
     }
     if (mountebankRecord && mountebankPlayback) {
-      const msg =
-        '[Mountebank] Error: Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are set to "true". Please enable only one.';
+      const msg = '[API Mocking] Error: Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are set to "true". Please enable only one.';
       logger.error(msg);
       throw new Error(msg);
     }
     if (!mountebankRecord && !mountebankPlayback) {
-      const msg =
-        '[Mountebank] Error: MOCK_MOUNTEBANK=true requires MOCK_MOUNTEBANK_RECORD=true or MOCK_MOUNTEBANK_PLAYBACK=true.';
+      const msg = '[API Mocking] Error: MOCK_MOUNTEBANK=true requires MOCK_MOUNTEBANK_RECORD=true or MOCK_MOUNTEBANK_PLAYBACK=true.';
       logger.error(msg);
       throw new Error(msg);
     }
 
     const activeScenario = scenarioName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const mountebankDataDir = 'test-mock';
-    const mockDataDir = resolveFromAppRoot(mountebankDataDir);
-    const imposterFilePath = resolveFromAppRoot(
-      mountebankDataDir,
-      `mountebank-imposter-${activeScenario}.json`
-    );
-    
+    this._mockDataDir = resolveFromAppRoot(mountebankDataDir);
     this._activeScenario = activeScenario;
-    this._imposterFilePath = imposterFilePath;
 
     this._mode = mountebankRecord ? 'record' : 'playback';
-    logger.info(`[Mountebank] Mountebank ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
+    logger.info(`[API Mocking] Hybrid Proxy ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
+
+    await this._ensureMockDir();
 
     if (this._mode === 'playback') {
-      const mgr = new MountebankMockManager();
-      mgr.configure({
-        mode: this._mode,
-        activeScenario,
-        adminHost: mountebankAdminHost,
-        adminPort: mountebankAdminPort,
-        imposterPort: mountebankImposterPort,
-        targetBaseUrl: mountebankTargetUrl || 'http://localhost:3000', // fallback since it's required internally but unused
-        mockDataDir,
-        imposterFilePath,
-      });
-
-      this._mountebankManager = mgr;
-      await mgr.init();
-
       if (_page) {
-        const imposterUrl = `http://127.0.0.1:${mountebankImposterPort}`;
-        logger.info(`[Mountebank] Setting up global page.route for '${this._mockInterceptPattern}' -> ${imposterUrl}`);
-        
+        logger.info(`[API Mocking] Setting up Playwright playback routing for '${this._mockInterceptPattern}'`);
+
         await _page.route(this._mockInterceptPattern, async (route) => {
           try {
             const request = route.request();
@@ -103,39 +95,52 @@ class NetworkRecordPlaybackManager {
             }
 
             const requestUrl = new URL(request.url());
-            if (requestUrl.port === String(mountebankImposterPort)) {
-              return route.continue();
+            const mockKey = this._generateMockKey(request.method(), requestUrl);
+            const mockFilePath = path.join(this._mockDataDir, `${mockKey}.json`);
+
+            try {
+              const fileStat = await fs.stat(mockFilePath);
+              if (fileStat.isFile()) {
+                const mockContent = await fs.readFile(mockFilePath, 'utf8');
+                const mockData = JSON.parse(mockContent);
+                logger.debug(`[API Mocking] Mock Found! Fulfilling request: ${requestUrl.href} from ${mockKey}.json`);
+                return route.fulfill({
+                  status: mockData.statusCode,
+                  headers: mockData.headers,
+                  body: mockData.body
+                });
+              }
+            } catch (e) {
+              // File not found
             }
 
-            const mockUrl = `${imposterUrl}${requestUrl.pathname}${requestUrl.search}`;
-            logger.debug(`[Mountebank] Intercepting request: ${requestUrl.href} -> ${mockUrl}`);
-            const response = await route.fetch({ url: mockUrl });
-            await route.fulfill({ response });
+            logger.debug(`[API Mocking] Mock Not Found. Continuing to real backend: ${requestUrl.href}`);
+            await route.continue();
           } catch (err) {
-            logger.error(`[Mountebank] Failed to route request: ${err.message}`);
+            logger.error(`[API Mocking] Failed to route request: ${err.message}`);
             await route.continue();
           }
         });
       }
     } else if (this._mode === 'record' && _page) {
-      logger.info(`[Mountebank] Setting up native Playwright recording for '${this._mockInterceptPattern}'`);
-      
+      logger.info(`[API Mocking] Setting up Playwright recording for '${this._mockInterceptPattern}'`);
+
       _page.on('response', async (response) => {
         try {
           const request = response.request();
-          
+
           if (!['fetch', 'xhr'].includes(request.resourceType())) {
             return;
           }
 
           const requestUrl = new URL(request.url());
-          
+
           const shouldSkip = this._mockSkipEndpoints.some(skipPattern => requestUrl.pathname.includes(skipPattern));
           if (shouldSkip) {
-            logger.debug(`[Mountebank] Skipping recording for: ${requestUrl.pathname}`);
+            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname}`);
             return;
           }
-          
+
           let responseBody = '';
           try {
             const buffer = await response.body();
@@ -144,104 +149,69 @@ class NetworkRecordPlaybackManager {
             // ignore binary or empty
           }
 
-          const responseHeaders = response.headers();
-          // Filter out hop-by-hop or dynamic headers to keep stubs clean
-          delete responseHeaders['content-encoding'];
-
-          const contentType = responseHeaders['content-type'] || '';
-          if (!contentType.toLowerCase().includes('charset=utf-8')) {
-            logger.debug(`[Mountebank] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
+          if (responseBody.trim() === '') {
+            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (empty body)`);
             return;
           }
 
-          this._nativeRecordedStubs.push({
-            predicates: [
-              { deepEquals: { method: request.method() } },
-              { deepEquals: { path: requestUrl.pathname } }
-            ],
-            responses: [
-              {
-                is: {
-                  statusCode: response.status(),
-                  headers: responseHeaders,
-                  body: responseBody
-                }
-              }
-            ]
-          });
+          const responseHeaders = response.headers();
+          delete responseHeaders['content-encoding'];
 
-          logger.debug(`[Mountebank] Native recorded: ${request.method()} ${requestUrl.pathname}`);
+          const contentType = responseHeaders['content-type'] || '';
+          if (!contentType.toLowerCase().includes('charset=utf-8') && responseBody === '') {
+            // we skip non-text types unless they have stringifiable bodies? We'll keep the check.
+            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
+            return;
+          }
+
+          const mockKey = this._generateMockKey(request.method(), requestUrl);
+          const mockFilePath = path.join(this._mockDataDir, `${mockKey}.json`);
+
+          const mockData = {
+            method: request.method(),
+            endpoint: requestUrl.pathname,
+            statusCode: response.status(),
+            headers: responseHeaders,
+            body: responseBody
+          };
+
+          const saveMock = async () => {
+            try {
+              const existingContent = await fs.readFile(mockFilePath, 'utf8');
+              const existingData = JSON.parse(existingContent);
+              const existingBodyLength = existingData.body ? existingData.body.length : 0;
+              const newBodyLength = responseBody ? responseBody.length : 0;
+              if (newBodyLength <= existingBodyLength) {
+                logger.debug(`[API Mocking] Skipping save for ${mockKey}.json, existing mock has equal or larger body.`);
+                return;
+              }
+            } catch (e) {
+              // File doesn't exist or is invalid JSON, proceed to save
+            }
+
+            const tempFilePath = `${mockFilePath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
+            await fs.writeFile(tempFilePath, JSON.stringify(mockData, null, 2), 'utf8');
+            await fs.rename(tempFilePath, mockFilePath);
+            logger.debug(`[API Mocking] Recorded mock saved: ${mockKey}.json`);
+          };
+
+          const prevPromise = this._writeQueue.get(mockKey) || Promise.resolve();
+          const currentPromise = prevPromise.then(() => saveMock()).catch(err => {
+            logger.error(`[API Mocking] Failed to save mock ${mockKey}: ${err.message}`);
+          });
+          this._writeQueue.set(mockKey, currentPromise);
         } catch (err) {
-          logger.error(`[Mountebank] Failed to record request: ${err.message}`);
+          logger.error(`[API Mocking] Failed to record request: ${err.message}`);
         }
       });
     }
   }
 
   async saveRecordedMocks() {
+    // With the new architecture, mocks are saved immediately in _page.on('response').
+    // So this method doesn't need to do anything for native Playwright recording.
     if (this._mode === 'record') {
-      try {
-        const mockDataDir = resolveFromAppRoot('test-mock');
-        await fs.mkdir(mockDataDir, { recursive: true });
-
-        // Group stubs by the last segment of the path
-        const stubsBySegment = {};
-        for (const stub of this._nativeRecordedStubs) {
-          const pathPredicate = stub.predicates.find(p => p.deepEquals && p.deepEquals.path);
-          if (!pathPredicate) continue;
-          const reqPath = pathPredicate.deepEquals.path;
-          
-          // Get last segment
-          const segments = reqPath.split('/').filter(s => s);
-          const segment = segments.length > 0 ? segments[segments.length - 1] : 'root';
-          
-          if (!stubsBySegment[segment]) {
-            stubsBySegment[segment] = [];
-          }
-          stubsBySegment[segment].push(stub);
-        }
-
-        for (const [segment, stubs] of Object.entries(stubsBySegment)) {
-          const filePath = resolveFromAppRoot('test-mock', `imposter-${segment}.json`);
-          let existingData = {
-            protocol: 'http',
-            port: Number(this._mountebankImposterPort),
-            name: `record-${segment}`,
-            recordRequests: false,
-            stubs: []
-          };
-
-          try {
-            const fileContent = await fs.readFile(filePath, 'utf8');
-            existingData = JSON.parse(fileContent);
-          } catch (e) {
-            // File doesn't exist or is invalid, use default
-          }
-
-          // Merge stubs - replace existing stub if method and path match
-          for (const newStub of stubs) {
-            const newMethod = newStub.predicates.find(p => p.deepEquals && p.deepEquals.method)?.deepEquals.method;
-            const newPath = newStub.predicates.find(p => p.deepEquals && p.deepEquals.path)?.deepEquals.path;
-            
-            const existingIndex = existingData.stubs.findIndex(existingStub => {
-              const existingMethod = existingStub.predicates?.find(p => p.deepEquals && p.deepEquals.method)?.deepEquals.method;
-              const existingPath = existingStub.predicates?.find(p => p.deepEquals && p.deepEquals.path)?.deepEquals.path;
-              return existingMethod === newMethod && existingPath === newPath;
-            });
-
-            if (existingIndex >= 0) {
-              existingData.stubs[existingIndex] = newStub;
-            } else {
-              existingData.stubs.push(newStub);
-            }
-          }
-
-          await fs.writeFile(filePath, JSON.stringify(existingData, null, 2));
-          logger.info(`[Mountebank] Natively recorded mocks saved to ${filePath}`);
-        }
-      } catch (err) {
-        logger.error(`[Mountebank] Failed to save recorded mocks: ${err.message}`);
-      }
+      logger.info(`[API Mocking] Recorded mocks are saved directly to ${this._mockDataDir}`);
     } else if (this._mountebankManager) {
       await this._mountebankManager.saveRecordedMocks();
     }
@@ -252,7 +222,7 @@ class NetworkRecordPlaybackManager {
       try {
         await this._mountebankManager.deleteImposter(this._mountebankManager.imposterPort);
       } catch (err) {
-        logger.debug(`[Mountebank] Ignored error deleting imposter during stop: ${err.message}`);
+        logger.debug(`[API Mocking] Ignored error deleting imposter during stop: ${err.message}`);
       }
       await this._mountebankManager.stopMockServer();
       this._mountebankManager = null;

@@ -11,7 +11,7 @@ const appRoot = path.basename(process.cwd()) === 'app'
     ? path.join(process.cwd(), 'app')
     : process.cwd();
 
-const resultsDir = 'test_results';
+const resultsDir = 'test-results';
 const historySource = path.join(appRoot, resultsDir, 'reports/allure-report/history');
 const historyDest = path.join(appRoot, resultsDir, 'allure-results/history');
 

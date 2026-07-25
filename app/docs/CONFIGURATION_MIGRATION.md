@@ -398,13 +398,13 @@ All AI feature invocations are logged with the prefix `Agentic AI:`. Filter logs
 
 ```bash
 # View only AI-related logs
-grep "Agentic AI" test_logs/*.log
+grep "Agentic AI" test-logs/*.log
 
 # Count AI healing attempts
-grep "locator self-healing" test_logs/*.log | wc -l
+grep "locator self-healing" test-logs/*.log | wc -l
 
 # Check failure analysis
-grep "Failure Analysis" test_logs/*.log
+grep "Failure Analysis" test-logs/*.log
 ```
 
 

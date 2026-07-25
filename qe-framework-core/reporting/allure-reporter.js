@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
  */
 class AllureReporter {
   constructor() {
-    const resultsDir = 'test_results';
+    const resultsDir = 'test-results';
     this.allureResultsDir = resolveFromAppRoot(resultsDir, 'allure-results');
     this.environmentFile = path.join(this.allureResultsDir, 'environment.properties');
     this.initializeReporting();
@@ -414,9 +414,9 @@ class AllureReporter {
    * This handles expanding all group tree nodes, extracting all testcase details panels,
    * rewriting navigation/hash links to local page containers, and applying specific styles for print/screen view.
    * 
-   * @param {string} resultsDir - The test results directory (defaults to 'test_results')
+   * @param {string} resultsDir - The test results directory (defaults to 'test-results')
    */
-  async exportToPdf(resultsDir = 'test_results') {
+  async exportToPdf(resultsDir = 'test-results') {
     const { chromium } = await import('playwright');
     
     // Define absolute paths for input Allure report and output directories
