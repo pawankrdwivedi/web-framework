@@ -50,19 +50,19 @@ class NetworkRecordPlaybackManager {
     }
     if (mountebankRecord && mountebankPlayback) {
       const msg =
-        'Validation Error: Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are set to "true". Please enable only one.';
+        '[Mountebank] Error: Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are set to "true". Please enable only one.';
       logger.error(msg);
       throw new Error(msg);
     }
     if (!mountebankRecord && !mountebankPlayback) {
       const msg =
-        'Validation Error: MOCK_MOUNTEBANK=true requires MOCK_MOUNTEBANK_RECORD=true or MOCK_MOUNTEBANK_PLAYBACK=true.';
+        '[Mountebank] Error: MOCK_MOUNTEBANK=true requires MOCK_MOUNTEBANK_RECORD=true or MOCK_MOUNTEBANK_PLAYBACK=true.';
       logger.error(msg);
       throw new Error(msg);
     }
 
     const activeScenario = scenarioName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
-    const mountebankDataDir = 'test_mock';
+    const mountebankDataDir = 'test-mock';
     const mockDataDir = resolveFromAppRoot(mountebankDataDir);
     const imposterFilePath = resolveFromAppRoot(
       mountebankDataDir,
@@ -73,7 +73,7 @@ class NetworkRecordPlaybackManager {
     this._imposterFilePath = imposterFilePath;
 
     this._mode = mountebankRecord ? 'record' : 'playback';
-    logger.info(`[Mock] Mountebank ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
+    logger.info(`[Mountebank] Mountebank ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
 
     if (this._mode === 'playback') {
       const mgr = new MountebankMockManager();
@@ -93,7 +93,7 @@ class NetworkRecordPlaybackManager {
 
       if (_page) {
         const imposterUrl = `http://127.0.0.1:${mountebankImposterPort}`;
-        logger.info(`[Mock] Setting up global page.route for '${this._mockInterceptPattern}' -> ${imposterUrl}`);
+        logger.info(`[Mountebank] Setting up global page.route for '${this._mockInterceptPattern}' -> ${imposterUrl}`);
         
         await _page.route(this._mockInterceptPattern, async (route) => {
           try {
@@ -108,17 +108,17 @@ class NetworkRecordPlaybackManager {
             }
 
             const mockUrl = `${imposterUrl}${requestUrl.pathname}${requestUrl.search}`;
-            logger.debug(`[Mock] Intercepting request: ${requestUrl.href} -> ${mockUrl}`);
+            logger.debug(`[Mountebank] Intercepting request: ${requestUrl.href} -> ${mockUrl}`);
             const response = await route.fetch({ url: mockUrl });
             await route.fulfill({ response });
           } catch (err) {
-            logger.error(`[Mock] Failed to route request: ${err.message}`);
+            logger.error(`[Mountebank] Failed to route request: ${err.message}`);
             await route.continue();
           }
         });
       }
     } else if (this._mode === 'record' && _page) {
-      logger.info(`[Mock] Setting up native Playwright recording for '${this._mockInterceptPattern}'`);
+      logger.info(`[Mountebank] Setting up native Playwright recording for '${this._mockInterceptPattern}'`);
       
       _page.on('response', async (response) => {
         try {
@@ -132,7 +132,7 @@ class NetworkRecordPlaybackManager {
           
           const shouldSkip = this._mockSkipEndpoints.some(skipPattern => requestUrl.pathname.includes(skipPattern));
           if (shouldSkip) {
-            logger.debug(`[Mock] Skipping recording for: ${requestUrl.pathname}`);
+            logger.debug(`[Mountebank] Skipping recording for: ${requestUrl.pathname}`);
             return;
           }
           
@@ -150,7 +150,7 @@ class NetworkRecordPlaybackManager {
 
           const contentType = responseHeaders['content-type'] || '';
           if (!contentType.toLowerCase().includes('charset=utf-8')) {
-            logger.debug(`[Mock] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
+            logger.debug(`[Mountebank] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
             return;
           }
 
@@ -170,9 +170,9 @@ class NetworkRecordPlaybackManager {
             ]
           });
 
-          logger.debug(`[Mock] Native recorded: ${request.method()} ${requestUrl.pathname}`);
+          logger.debug(`[Mountebank] Native recorded: ${request.method()} ${requestUrl.pathname}`);
         } catch (err) {
-          logger.error(`[Mock] Failed to record request: ${err.message}`);
+          logger.error(`[Mountebank] Failed to record request: ${err.message}`);
         }
       });
     }
@@ -181,7 +181,7 @@ class NetworkRecordPlaybackManager {
   async saveRecordedMocks() {
     if (this._mode === 'record') {
       try {
-        const mockDataDir = resolveFromAppRoot('test_mock');
+        const mockDataDir = resolveFromAppRoot('test-mock');
         await fs.mkdir(mockDataDir, { recursive: true });
 
         // Group stubs by the last segment of the path
@@ -202,7 +202,7 @@ class NetworkRecordPlaybackManager {
         }
 
         for (const [segment, stubs] of Object.entries(stubsBySegment)) {
-          const filePath = resolveFromAppRoot('test_mock', `imposter-${segment}.json`);
+          const filePath = resolveFromAppRoot('test-mock', `imposter-${segment}.json`);
           let existingData = {
             protocol: 'http',
             port: Number(this._mountebankImposterPort),
@@ -237,10 +237,10 @@ class NetworkRecordPlaybackManager {
           }
 
           await fs.writeFile(filePath, JSON.stringify(existingData, null, 2));
-          logger.info(`[Mock] Natively recorded mocks saved to ${filePath}`);
+          logger.info(`[Mountebank] Natively recorded mocks saved to ${filePath}`);
         }
       } catch (err) {
-        logger.error(`[Mock] Failed to save recorded mocks: ${err.message}`);
+        logger.error(`[Mountebank] Failed to save recorded mocks: ${err.message}`);
       }
     } else if (this._mountebankManager) {
       await this._mountebankManager.saveRecordedMocks();
@@ -252,7 +252,7 @@ class NetworkRecordPlaybackManager {
       try {
         await this._mountebankManager.deleteImposter(this._mountebankManager.imposterPort);
       } catch (err) {
-        logger.debug(`[Mock] Ignored error deleting imposter during stop: ${err.message}`);
+        logger.debug(`[Mountebank] Ignored error deleting imposter during stop: ${err.message}`);
       }
       await this._mountebankManager.stopMockServer();
       this._mountebankManager = null;

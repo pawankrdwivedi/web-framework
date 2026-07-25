@@ -1,7 +1,7 @@
 /node_modules
 /test_logs
 /test_results
-/test_mock/
+/test-mock/
 package-lock.json
 mb*.*
 *.tgz

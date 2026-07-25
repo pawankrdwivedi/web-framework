@@ -35,7 +35,7 @@ class MountebankServer {
     const adminHost = options.adminHost || process.env.MOCK_MOUNTEBANK_ADMIN_HOST || '127.0.0.1';
     const adminPort = Number(options.adminPort || process.env.MOCK_MOUNTEBANK_ADMIN_PORT || 2525);
     const imposterPort = Number(options.imposterPort || process.env.MOCK_MOUNTEBANK_IMPOSTER_PORT || 4545);
-    const mockDataDir = path.join(appRoot, 'test_mock');
+    const mockDataDir = path.join(appRoot, 'test-mock');
     const imposterFilePath = options.imposterFilePath || path.join(mockDataDir, `mountebank-imposter-${scenario}.json`);
 
     const manager = new mountebankMockManager();
@@ -66,7 +66,7 @@ class MountebankServer {
     if (!targetBaseUrl) {
       throw new Error('targetBaseUrl is required to start montebank server in record mode.');
     }
-    const mockDataDir = path.join(appRoot, 'test_mock');
+    const mockDataDir = path.join(appRoot, 'test-mock');
     const imposterFilePath = options.imposterFilePath || path.join(mockDataDir, `mountebank-imposter-${scenario}.json`);
 
     const manager = new mountebankMockManager();

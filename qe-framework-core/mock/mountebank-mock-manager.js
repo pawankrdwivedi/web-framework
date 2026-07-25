@@ -37,7 +37,7 @@ class MountebankMockManager {
     this.imposterPort = Number(options.imposterPort || this.imposterPort);
     this.protocol = options.protocol || this.protocol;
     this.targetBaseUrl = options.targetBaseUrl || this.targetBaseUrl;
-    this.mockDataDir = options.mockDataDir || resolveFromAppRoot('test_mock');
+    this.mockDataDir = options.mockDataDir || resolveFromAppRoot('test-mock');
     this.imposterFilePath =
       options.imposterFilePath ||
       //path.join(this.mockDataDir, `mountebank-imposter-${this.activeScenario}.json`);
@@ -174,6 +174,8 @@ class MountebankMockManager {
       );
     }
 
+
+
     return {
       protocol: this.protocol,
       port: this.imposterPort,
@@ -181,6 +183,8 @@ class MountebankMockManager {
       stubs: combinedStubs,
     };
   }
+
+  
 
   async createImposter(imposterPayload) {
     await axios.post(`${this.adminBaseUrl}/imposters`, imposterPayload, {
