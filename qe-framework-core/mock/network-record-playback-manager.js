@@ -56,6 +56,8 @@ class NetworkRecordPlaybackManager {
 
     const skipEndpointsStr = process.env.MOCK_SKIP_ENDPOINTS || execConfig.mockSkipEndpoints || execConfig.MOCK_SKIP_ENDPOINTS || '';
     this._mockSkipEndpoints = skipEndpointsStr.split(',').map(s => s.trim()).filter(s => s);
+    const recordEndpointsStr = process.env.MOCK_RECORD_ENDPOINTS || execConfig.mockRecordEndpoints || execConfig.MOCK_RECORD_ENDPOINTS || '';
+    this._mockRecordEndpoints = recordEndpointsStr.split(',').map(s => s.trim()).filter(s => s);
 
     this._mockInterceptPattern = mockInterceptPattern;
 
@@ -135,10 +137,20 @@ class NetworkRecordPlaybackManager {
 
           const requestUrl = new URL(request.url());
 
+          // Skip patterns take precedence: if path matches any skip pattern, do not record.
           const shouldSkip = this._mockSkipEndpoints.some(skipPattern => requestUrl.pathname.includes(skipPattern));
           if (shouldSkip) {
-            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname}`);
+            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (matched skip pattern)`);
             return;
+          }
+
+          // If record endpoints were specified, only record requests whose pathname includes one of those patterns.
+          if (this._mockRecordEndpoints && this._mockRecordEndpoints.length > 0) {
+            const matchesRecord = this._mockRecordEndpoints.some(recPattern => requestUrl.pathname.includes(recPattern));
+            if (!matchesRecord) {
+              logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (did not match any record pattern)`);
+              return;
+            }
           }
 
           let responseBody = '';
