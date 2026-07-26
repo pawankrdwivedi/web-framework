@@ -1,7 +1,7 @@
 import xlsx from 'xlsx';
 import path from 'path';
 import fs from 'fs';
-import logger from '../logger/logger.js';
+import logger from '../logger/Logger.js';
 
 class ExcelReader {
   /**

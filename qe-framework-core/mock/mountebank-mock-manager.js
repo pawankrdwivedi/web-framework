@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { spawn } from 'child_process';
 import axios from 'axios';
-import logger from '../logger/logger.js';
+import logger from '../logger/Logger.js';
 import { resolveFromAppRoot } from '../utils/path-resolver.js';
 
 class MountebankMockManager {

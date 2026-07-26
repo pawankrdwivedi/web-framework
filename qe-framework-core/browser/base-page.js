@@ -1,6 +1,6 @@
 import browserManager from './browser-manager.js';
 import angularHelper from './angular-helper.js';
-import logger from '../logger/logger.js';
+import logger from '../logger/Logger.js';
 import configManager from '../config/config-manager.js';
 
 /**
@@ -54,82 +54,82 @@ class BasePage {
       const opts = {};
       if (name) opts.name = name;
       if (exact) opts.exact = true;
-      logger.debug(`[resolveLocator] getByRole("${role.trim()}"${name ? `, name="${name}"` : ''}${exact ? ', exact' : ''})`);
+      logger.info(`[BrowserManager] [resolveLocator] getByRole("${role.trim()}"${name ? `, name="${name}"` : ''}${exact ? ', exact' : ''})`);
       return this.page.getByRole(role.trim(), Object.keys(opts).length ? opts : undefined);
     }
 
     // text~=<value>  (exact match)
     if (/^text~=/i.test(s)) {
       const value = s.slice(6);
-      logger.debug(`[resolveLocator] getByText("${value}", exact)`);
+      logger.info(`[BrowserManager] [resolveLocator] getByText("${value}", exact)`);
       return this.page.getByText(value, { exact: true });
     }
 
     // text=<value>  (partial/default match)
     if (/^text=/i.test(s)) {
       const value = s.slice(5);
-      logger.debug(`[resolveLocator] getByText("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByText("${value}")`);
       return this.page.getByText(value);
     }
 
     // label~=<value>  (exact)
     if (/^label~=/i.test(s)) {
       const value = s.slice(7);
-      logger.debug(`[resolveLocator] getByLabel("${value}", exact)`);
+      logger.info(`[BrowserManager] [resolveLocator] getByLabel("${value}", exact)`);
       return this.page.getByLabel(value, { exact: true });
     }
 
     // label=<value>
     if (/^label=/i.test(s)) {
       const value = s.slice(6);
-      logger.debug(`[resolveLocator] getByLabel("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByLabel("${value}")`);
       return this.page.getByLabel(value);
     }
 
     // placeholder~=<value>  (exact)
     if (/^placeholder~=/i.test(s)) {
       const value = s.slice(13);
-      logger.debug(`[resolveLocator] getByPlaceholder("${value}", exact)`);
+      logger.info(`[BrowserManager] [resolveLocator] getByPlaceholder("${value}", exact)`);
       return this.page.getByPlaceholder(value, { exact: true });
     }
 
     // placeholder=<value>
     if (/^placeholder=/i.test(s)) {
       const value = s.slice(12);
-      logger.debug(`[resolveLocator] getByPlaceholder("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByPlaceholder("${value}")`);
       return this.page.getByPlaceholder(value);
     }
 
     // testid=<value>
     if (/^testid=/i.test(s)) {
       const value = s.slice(7);
-      logger.debug(`[resolveLocator] getByTestId("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByTestId("${value}")`);
       return this.page.getByTestId(value);
     }
 
     // title=<value>
     if (/^title=/i.test(s)) {
       const value = s.slice(6);
-      logger.debug(`[resolveLocator] getByTitle("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByTitle("${value}")`);
       return this.page.getByTitle(value);
     }
 
     // alt=<value>
     if (/^alt=/i.test(s)) {
       const value = s.slice(4);
-      logger.debug(`[resolveLocator] getByAltText("${value}")`);
+      logger.info(`[BrowserManager] [resolveLocator] getByAltText("${value}")`);
       return this.page.getByAltText(value);
     }
 
     // xpath=<expression>  — prefix it so Playwright treats it as XPath
     if (/^xpath=/i.test(s)) {
       const expr = s.slice(6).trim().startsWith('xpath=') ? s.slice(6) : `xpath=${s.slice(6)}`;
-      logger.debug(`[resolveLocator] locator("${expr}")`);
+      logger.info(`[BrowserManager] [resolveLocator] locator("${expr}")`);
       return this.page.locator(expr);
     }
 
     // Default → CSS / XPath auto-detected by Playwright
-    logger.debug(`[resolveLocator] locator("${s}")`);
+    logger.info(`[BrowserManager] [resolveLocator] locator("${s}")`);
     return this.page.locator(s);
   }
 
@@ -160,7 +160,7 @@ class BasePage {
   // ─── Navigation ──────────────────────────────────────────────────────────
 
   async navigateTo(pathOrUrl) {
-    logger.info(`Navigating to URL/Path: ${pathOrUrl}`);
+    logger.info(`[BrowserManager] Navigating to URL/Path: ${pathOrUrl}`);
     await this.page.goto(pathOrUrl);
     await this.waitForAngular();
   }
@@ -170,7 +170,7 @@ class BasePage {
    * @param {'load'|'domcontentloaded'|'networkidle'|'commit'} [waitUntil='load']
    */
   async reload(waitUntil = 'load') {
-    logger.info(`Reloading page (waitUntil: ${waitUntil})`);
+    logger.info(`[BrowserManager] Reloading page (waitUntil: ${waitUntil})`);
     await this.page.reload({ waitUntil });
     await this.waitForAngular();
   }
@@ -201,7 +201,7 @@ class BasePage {
    * @param {number} [timeout]
    */
   async waitForURL(urlOrPattern, timeout = this.getDefaultTimeout()) {
-    logger.info(`Waiting for URL: ${urlOrPattern}`);
+    logger.info(`[BrowserManager] Waiting for URL: ${urlOrPattern}`);
     await this.page.waitForURL(urlOrPattern, { timeout });
   }
 
@@ -210,7 +210,7 @@ class BasePage {
    * @param {number} [timeout]
    */
   async waitForNetworkIdle(timeout = this.getDefaultTimeout()) {
-    logger.info('Waiting for network idle');
+    logger.info('[BrowserManager] Waiting for network idle');
     await this.page.waitForLoadState('networkidle', { timeout });
   }
 
@@ -223,7 +223,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async click(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Clicking element: "${selector}"`);
+    logger.info(`[BrowserManager] Clicking element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.click();
     await this.waitForAngular();
@@ -236,7 +236,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async doubleClick(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Double-clicking element: "${selector}"`);
+    logger.info(`[BrowserManager] Double-clicking element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.dblclick();
     await this.waitForAngular();
@@ -249,7 +249,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async rightClick(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Right-clicking element: "${selector}"`);
+    logger.info(`[BrowserManager] Right-clicking element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.click({ button: 'right' });
     await this.waitForAngular();
@@ -263,7 +263,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async clickAt(selector, position, fallbacks = [], timeout = 5000) {
-    logger.debug(`Clicking element at position (${position.x}, ${position.y}): "${selector}"`);
+    logger.info(`[BrowserManager] Clicking element at position (${position.x}, ${position.y}): "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.click({ position });
     await this.waitForAngular();
@@ -277,7 +277,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async clickAndHold(selector, holdMs = 500, fallbacks = [], timeout = 5000) {
-    logger.debug(`Click-and-hold on element: "${selector}" for ${holdMs}ms`);
+    logger.info(`[BrowserManager] Click-and-hold on element: "${selector}" for ${holdMs}ms`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.hover();
     await this.page.mouse.down();
@@ -296,7 +296,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async fill(selector, text, fallbacks = [], timeout = 5000) {
-    logger.debug(`Filling text in element: "${selector}"`);
+    logger.info(`[BrowserManager] Filling text in element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.fill(text);
     await this.waitForAngular();
@@ -312,7 +312,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async type(selector, text, delay = 50, fallbacks = [], timeout = 5000) {
-    logger.debug(`Typing text in element: "${selector}" (delay: ${delay}ms)`);
+    logger.info(`[BrowserManager] Typing text in element: "${selector}" (delay: ${delay}ms)`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.pressSequentially(text, { delay });
     await this.waitForAngular();
@@ -325,7 +325,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async clear(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Clearing element: "${selector}"`);
+    logger.info(`[BrowserManager] Clearing element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.clear();
   }
@@ -339,7 +339,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async pressKey(selector, key, fallbacks = [], timeout = 5000) {
-    logger.debug(`Pressing key "${key}" on element: "${selector}"`);
+    logger.info(`[BrowserManager] Pressing key "${key}" on element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.press(key);
     await this.waitForAngular();
@@ -350,7 +350,7 @@ class BasePage {
    * @param {string} key  e.g. `'Escape'`, `'F5'`, `'Control+Shift+I'`
    */
   async pressKeyboard(key) {
-    logger.debug(`Pressing global keyboard key: "${key}"`);
+    logger.info(`[BrowserManager] Pressing global keyboard key: "${key}"`);
     await this.page.keyboard.press(key);
   }
 
@@ -361,7 +361,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async focus(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Focusing element: "${selector}"`);
+    logger.info(`[BrowserManager] Focusing element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.focus();
   }
@@ -373,7 +373,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async blur(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Blurring element: "${selector}"`);
+    logger.info(`[BrowserManager] Blurring element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.blur();
   }
@@ -388,7 +388,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async selectOption(selector, value, fallbacks = [], timeout = 5000) {
-    logger.debug(`Selecting option in: "${selector}"`);
+    logger.info(`[BrowserManager] Selecting option in: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.selectOption(value);
     await this.waitForAngular();
@@ -402,7 +402,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async uploadFile(selector, filePaths, fallbacks = [], timeout = 5000) {
-    logger.debug(`Uploading file(s) to: "${selector}"`);
+    logger.info(`[BrowserManager] Uploading file(s) to: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.setInputFiles(filePaths);
   }
@@ -416,7 +416,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async check(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Checking element: "${selector}"`);
+    logger.info(`[BrowserManager] Checking element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.check();
     await this.waitForAngular();
@@ -429,7 +429,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async uncheck(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Unchecking element: "${selector}"`);
+    logger.info(`[BrowserManager] Unchecking element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.uncheck();
     await this.waitForAngular();
@@ -444,7 +444,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async hover(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Hovering over element: "${selector}"`);
+    logger.info(`[BrowserManager] Hovering over element: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.hover();
     await this.waitForAngular();
@@ -457,7 +457,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async dragAndDrop(sourceSelector, targetSelector, timeout = 5000) {
-    logger.debug(`Drag "${sourceSelector}" → "${targetSelector}"`);
+    logger.info(`[BrowserManager] Drag "${sourceSelector}" → "${targetSelector}"`);
     const source = await this.resolveWithHealing(sourceSelector, [], timeout);
     const target = await this.resolveWithHealing(targetSelector, [], timeout);
     await source.dragTo(target);
@@ -470,7 +470,7 @@ class BasePage {
    * @param {number} y
    */
   async scrollTo(x, y) {
-    logger.debug(`Scrolling page to (${x}, ${y})`);
+    logger.info(`[BrowserManager]Scrolling page to (${x}, ${y})`);
     await this.page.evaluate(([sx, sy]) => window.scrollTo(sx, sy), [x, y]);
   }
 
@@ -481,7 +481,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async scrollIntoView(selector, fallbacks = [], timeout = 5000) {
-    logger.debug(`Scrolling element into view: "${selector}"`);
+    logger.info(`[BrowserManager] Scrolling element into view: "${selector}"`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.scrollIntoViewIfNeeded();
   }
@@ -494,9 +494,9 @@ class BasePage {
    * @param {string} [promptText] Optional text to enter for prompt dialogs.
    */
   async acceptDialog(promptText = '') {
-    logger.debug('Registering dialog accept handler');
+    logger.info('Registering dialog accept handler');
     this.page.once('dialog', async (dialog) => {
-      logger.info(`[Dialog] type="${dialog.type()}" message="${dialog.message()}" → accepting`);
+      logger.info(`[BrowserManager] [Dialog] type="${dialog.type()}" message="${dialog.message()}" → accepting`);
       await dialog.accept(promptText || undefined);
     });
   }
@@ -506,9 +506,9 @@ class BasePage {
    * Call this BEFORE the action that triggers the dialog.
    */
   async dismissDialog() {
-    logger.debug('Registering dialog dismiss handler');
+    logger.info('Registering dialog dismiss handler');
     this.page.once('dialog', async (dialog) => {
-      logger.info(`[Dialog] type="${dialog.type()}" message="${dialog.message()}" → dismissing`);
+      logger.info(`[BrowserManager] [Dialog] type="${dialog.type()}" message="${dialog.message()}" → dismissing`);
       await dialog.dismiss();
     });
   }
@@ -522,7 +522,7 @@ class BasePage {
    * @returns {Promise<import('playwright').Locator>}
    */
   async waitForVisible(selector, timeout = this.getDefaultTimeout()) {
-    logger.debug(`Waiting for visible: "${selector}"`);
+    logger.info(`[BrowserManager] Waiting for visible: "${selector}"`);
     const locator = this.resolveLocator(selector);
     await locator.waitFor({ state: 'visible', timeout });
     return locator;
@@ -534,7 +534,7 @@ class BasePage {
    * @param {number} [timeout]
    */
   async waitForHidden(selector, timeout = this.getDefaultTimeout()) {
-    logger.debug(`Waiting for hidden: "${selector}"`);
+    logger.info(`[BrowserManager] Waiting for hidden: "${selector}"`);
     const locator = this.resolveLocator(selector);
     await locator.waitFor({ state: 'hidden', timeout });
   }
@@ -546,7 +546,7 @@ class BasePage {
    * @returns {Promise<import('playwright').Locator>}
    */
   async waitForAttached(selector, timeout = this.getDefaultTimeout()) {
-    logger.debug(`Waiting for attached: "${selector}"`);
+    logger.info(`[BrowserManager] Waiting for attached: "${selector}"`);
     const locator = this.resolveLocator(selector);
     await locator.waitFor({ state: 'attached', timeout });
     return locator;
@@ -558,7 +558,7 @@ class BasePage {
    * @param {number} [timeout]
    */
   async waitForEnabled(selector, timeout = this.getDefaultTimeout()) {
-    logger.debug(`Waiting for enabled: "${selector}"`);
+    logger.info(`[BrowserManager] Waiting for enabled: "${selector}"`);
     const locator = this.resolveLocator(selector);
     await locator.waitFor({ state: 'visible', timeout });
     await expect(locator).toBeEnabled({ timeout });
@@ -571,7 +571,7 @@ class BasePage {
    * @param {number} [timeout]
    */
   async waitForText(selector, text, timeout = this.getDefaultTimeout()) {
-    logger.debug(`Waiting for text "${text}" in: "${selector}"`);
+    logger.info(`[BrowserManager] Waiting for text "${text}" in: "${selector}"`);
     const locator = this.resolveLocator(selector);
     await locator.waitFor({ state: 'visible', timeout });
     await expect(locator).toContainText(text, { timeout });
@@ -583,7 +583,7 @@ class BasePage {
    * @param {number} ms
    */
   async waitFor(ms) {
-    logger.debug(`Waiting for ${ms}ms`);
+    logger.info(`[BrowserManager] Waiting for ${ms}ms`);
     await this.page.waitForTimeout(ms);
   }
 
@@ -607,7 +607,7 @@ class BasePage {
    * @returns {Promise<string[]>}
    */
   async getAllText(selector) {
-    logger.debug(`Getting all text for: "${selector}"`);
+    logger.info(`[BrowserManager] Getting all text for: "${selector}"`);
     return await this.resolveLocator(selector).allInnerTexts();
   }
 
@@ -731,7 +731,7 @@ class BasePage {
    * @returns {Promise<number>}
    */
   async getCount(selector) {
-    logger.debug(`Counting elements: "${selector}"`);
+    logger.info(`[BrowserManager] Counting elements: "${selector}"`);
     return await this.resolveLocator(selector).count();
   }
 
@@ -742,7 +742,7 @@ class BasePage {
    * @param {string} savePath  Absolute path including filename, e.g. `'/tmp/shot.png'`.
    */
   async screenshot(savePath) {
-    logger.info(`Taking full-page screenshot: ${savePath}`);
+    logger.info(`[BrowserManager] Taking full-page screenshot: ${savePath}`);
     await this.page.screenshot({ path: savePath, fullPage: true });
   }
 
@@ -754,7 +754,7 @@ class BasePage {
    * @param {number} [timeout=5000]
    */
   async elementScreenshot(selector, savePath, fallbacks = [], timeout = 5000) {
-    logger.info(`Taking element screenshot for "${selector}": ${savePath}`);
+    logger.info(`[BrowserManager] Taking element screenshot for "${selector}": ${savePath}`);
     const element = await this.resolveWithHealing(selector, fallbacks, timeout);
     await element.screenshot({ path: savePath });
   }
@@ -766,7 +766,7 @@ class BasePage {
    * @returns {Promise<*>}
    */
   async executeScript(script, ...args) {
-    logger.debug(`Executing browser script`);
+    logger.info(`[BrowserManager] Executing browser script`);
     return await this.page.evaluate(script, ...args);
   }
 
@@ -778,7 +778,7 @@ class BasePage {
    * @returns {import('playwright').Frame|null}
    */
   getFrame(nameOrUrl) {
-    logger.debug(`Getting frame: ${nameOrUrl}`);
+    logger.info(`[BrowserManager] Getting frame: ${nameOrUrl}`);
     return typeof nameOrUrl === 'string'
       ? this.page.frame({ name: nameOrUrl }) || this.page.frame({ url: nameOrUrl })
       : this.page.frame({ url: nameOrUrl });
@@ -791,7 +791,7 @@ class BasePage {
    * @returns {import('playwright').FrameLocator}
    */
   getFrameLocator(frameSelector) {
-    logger.debug(`Getting frame locator: "${frameSelector}"`);
+    logger.info(`[BrowserManager] Getting frame locator: "${frameSelector}"`);
     return this.page.frameLocator(frameSelector);
   }
 

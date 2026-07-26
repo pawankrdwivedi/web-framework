@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
-import logger from '../logger/logger.js';
+import logger from '../logger/Logger.js';
 import configManager from '../config/config-manager.js';
 import { resolveFromAppRoot } from '../utils/path-resolver.js';
 
