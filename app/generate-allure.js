@@ -42,10 +42,12 @@ try {
   process.exit(1);
 }
 
-try {
-  console.log('[Allure] Converting generated report to PDF and Static HTML...');
-  await allureReporter.exportToPdf(resultsDir);
-} catch (err) {
-  console.error('[Allure] PDF conversion failed:', err.message);
-  process.exit(1);
-}
+console.log('[Allure] Converting generated report to PDF and Static HTML...');
+(async () => {
+  try {
+    await allureReporter.exportToPdf(resultsDir);
+  } catch (err) {
+    console.error('[Allure] PDF conversion failed:', err.message);
+    process.exit(1);
+  }
+})();

@@ -1,9 +1,7 @@
 import logger from '../logger/Logger.js';
 import { resolveFromAppRoot } from '../utils/path-resolver.js';
 import configManager from '../config/config-manager.js';
-import MountebankMockManager from './mountebank-mock-manager.js';
 import fs from 'fs/promises';
-import crypto from 'crypto';
 import path from 'path';
 
 /**
@@ -11,7 +9,6 @@ import path from 'path';
  */
 class NetworkRecordPlaybackManager {
   constructor() {
-    this._mountebankManager = null;
     this._mode = null;
     this._activeScenario = null;
     this._mockDataDir = null;
@@ -42,7 +39,7 @@ class NetworkRecordPlaybackManager {
   }
 
   async init(_page, scenarioName = 'global') {
-    this._mountebankManager = null;
+    //this._mountebankManager = null;
 
     const execConfig = configManager.getExecutionConfig() || {};
     const enableMountebank =
@@ -224,21 +221,11 @@ class NetworkRecordPlaybackManager {
     // So this method doesn't need to do anything for native Playwright recording.
     if (this._mode === 'record') {
       logger.info(`[API Mocking] Recorded mocks are saved directly to ${this._mockDataDir}`);
-    } else if (this._mountebankManager) {
-      await this._mountebankManager.saveRecordedMocks();
     }
   }
 
   async stop() {
-    if (this._mountebankManager) {
-      try {
-        await this._mountebankManager.deleteImposter(this._mountebankManager.imposterPort);
-      } catch (err) {
-        logger.debug(`[API Mocking] Ignored error deleting imposter during stop: ${err.message}`);
-      }
-      await this._mountebankManager.stopMockServer();
-      this._mountebankManager = null;
-    }
+    // No-op for Playwright-native recording mode
   }
 }
 

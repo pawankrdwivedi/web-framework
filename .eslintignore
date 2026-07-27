@@ -1,0 +1,10 @@
+# Ignore build artifacts and test results
+qe-framework-core/dist/
+app/test-results/
+**/dist/
+**/test-results/
+node_modules/
+.cache/
+
+# Ignore compiled/minified JS assets from reports
+**/assets/*.js

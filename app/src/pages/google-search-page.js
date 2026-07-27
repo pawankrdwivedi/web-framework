@@ -1,5 +1,4 @@
-import { basePage, logger, configManager, playwrightAssertions, runtimeDataManager } from 'qe-framework-core';
-import {expect} from '@playwright/test';
+import { basePage, logger, configManager, runtimeDataManager } from 'qe-framework-core';
 
 class GoogleSearchPage extends basePage {
   constructor(page) {

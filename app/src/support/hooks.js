@@ -1,7 +1,8 @@
 import { Before, After, BeforeAll, AfterAll, Status, setDefaultTimeout } from '@cucumber/cucumber';
 import fs from 'fs';
 import path from 'path';
-import { browserManager, dbClient, logger, configManager, allureReporter, softAssert, componentTestHelper } from 'qe-framework-core';
+import { browserManager, logger, configManager, allureReporter, 
+         softAssert, componentTestHelper } from 'qe-framework-core';
 import mountebankServer from './mountebank-server.js';
 
 const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');

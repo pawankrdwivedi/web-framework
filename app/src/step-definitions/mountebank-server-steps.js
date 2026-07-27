@@ -1,5 +1,4 @@
 import { Given, When, Then } from '@cucumber/cucumber';
-import axios from 'axios';
 import mountebankServer from '../support/mountebank-server.js';
 
 Given('user starts mountebank playback server for scenario {string}', async function (scenarioName) {
@@ -41,10 +40,8 @@ Given(
 );
 
 When('user calls mountebank imposter endpoint {string}', async function (endpointPath) {
-  const url = `${this.mountebankBaseUrl}${endpointPath}`;
-  this.mountebankResponse = await axios.get(url, {
-    validateStatus: () => true,
-  });
+  // Use shim to read imposter file instead of calling a real HTTP admin API
+  this.mountebankResponse = await mountebankServer.callImposterEndpoint(endpointPath);
 });
 
 Then('mountebank response status should be {int}', function (expectedStatus) {

@@ -1,5 +1,6 @@
+import fs from 'fs';
 import path from 'path';
-import { logger, mountebankMockManager } from 'qe-framework-core';
+import { logger } from 'qe-framework-core';
 
 function sanitizeScenarioName(scenarioName) {
   return String(scenarioName || 'global').replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -7,8 +8,8 @@ function sanitizeScenarioName(scenarioName) {
 
 class MountebankServer {
   constructor() {
-    this.manager = null;
     this.mode = null;
+    this.imposterFilePath = null;
   }
 
   getModeFromEnv() {
@@ -17,7 +18,7 @@ class MountebankServer {
     const playbackEnabled = String(process.env.MOCK_MOUNTEBANK_PLAYBACK || 'false') === 'true';
 
     if (!enableMountebank) {
-      throw new Error('MOCK_MOUNTEBANK=true is required to start Mountebank server.');
+      throw new Error('MOCK_MOUNTEBANK=true is required to use mountebank-server shim.');
     }
     if (recordEnabled && playbackEnabled) {
       throw new Error('Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are true. Enable only one.');
@@ -32,83 +33,59 @@ class MountebankServer {
   async startPlayback(options = {}) {
     const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
     const scenario = sanitizeScenarioName(options.scenarioName || 'montebank_server_demo');
-    const adminHost = options.adminHost || process.env.MOCK_MOUNTEBANK_ADMIN_HOST || '127.0.0.1';
-    const adminPort = Number(options.adminPort || process.env.MOCK_MOUNTEBANK_ADMIN_PORT || 2525);
-    const imposterPort = Number(options.imposterPort || process.env.MOCK_MOUNTEBANK_IMPOSTER_PORT || 4545);
     const mockDataDir = path.join(appRoot, 'test-mock');
     const imposterFilePath = options.imposterFilePath || path.join(mockDataDir, `mountebank-imposter-${scenario}.json`);
 
-    const manager = new mountebankMockManager();
-    manager.configure({
-      mode: 'playback',
-      activeScenario: scenario,
-      adminHost,
-      adminPort,
-      imposterPort,
-      mockDataDir,
-      imposterFilePath,
-    });
-    await manager.init();
-
-    this.manager = manager;
     this.mode = 'playback';
-    logger.info(`[Moconst scenariontebankServer] Playback started on http://127.0.0.1:${imposterPort}`);
-    return { imposterBaseUrl: `http://127.0.0.1:${imposterPort}`, imposterFilePath };
+    this.imposterFilePath = imposterFilePath;
+
+    logger.info(`[Mountebank Shim] Playback mode (shim) selected. Imposter file: ${imposterFilePath}`);
+    return { imposterBaseUrl: `file://${imposterFilePath}`, imposterFilePath };
   }
 
   async startRecord(options = {}) {
     const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
     const scenario = sanitizeScenarioName(options.scenarioName || 'montebank_server_record_demo');
-    const adminHost = options.adminHost || process.env.MOCK_MOUNTEBANK_ADMIN_HOST || '127.0.0.1';
-    const adminPort = Number(options.adminPort || process.env.MOCK_MOUNTEBANK_ADMIN_PORT || 2525);
-    const imposterPort = Number(options.imposterPort || process.env.MOCK_MOUNTEBANK_IMPOSTER_PORT || 4545);
-    const targetBaseUrl = options.targetBaseUrl || process.env.MOCK_MOUNTEBANK_TARGET_URL;
-    if (!targetBaseUrl) {
-      throw new Error('targetBaseUrl is required to start montebank server in record mode.');
-    }
     const mockDataDir = path.join(appRoot, 'test-mock');
     const imposterFilePath = options.imposterFilePath || path.join(mockDataDir, `mountebank-imposter-${scenario}.json`);
 
-    const manager = new mountebankMockManager();
-    manager.configure({
-      mode: 'record',
-      activeScenario: scenario,
-      adminHost,
-      adminPort,
-      imposterPort,
-      targetBaseUrl,
-      mockDataDir,
-      imposterFilePath,
-    });
-    await manager.init();
-
-    this.manager = manager;
     this.mode = 'record';
-    logger.info(`[MontebankServer] Record mode started on http://127.0.0.1:${imposterPort}`);
-    return { imposterBaseUrl: `http://127.0.0.1:${imposterPort}`, imposterFilePath };
+    this.imposterFilePath = imposterFilePath;
+
+    logger.info(`[Mountebank Shim] Record mode (shim) selected. Imposter file: ${imposterFilePath}`);
+    return { imposterBaseUrl: `file://${imposterFilePath}`, imposterFilePath };
   }
 
   async startFromEnv(options = {}) {
     const mode = this.getModeFromEnv();
-    if (mode === 'record') {
-      return this.startRecord(options);
-    }
+    if (mode === 'record') return this.startRecord(options);
     return this.startPlayback(options);
   }
 
   async stop(saveRecordedMocks = false) {
-    if (!this.manager) {
-      return;
+    // shim is a no-op for stopping
+    if (saveRecordedMocks && this.mode === 'record') {
+      logger.info('[Mountebank Shim] saveRecordedMocks requested but shim does not manage recordings.');
+    }
+    this.mode = null;
+    this.imposterFilePath = null;
+    logger.info('[Mountebank Shim] stopped.');
+  }
+
+  async callImposterEndpoint(_endpointPath) {
+    // Basic shim: return the contents of the imposter file as the response body
+    if (!this.imposterFilePath || !fs.existsSync(this.imposterFilePath)) {
+      return { status: 404, data: null };
     }
 
-    if (saveRecordedMocks && this.mode === 'record') {
-      await this.manager.saveRecordedMocks();
+    try {
+      const content = fs.readFileSync(this.imposterFilePath, 'utf8');
+      const json = JSON.parse(content);
+      return { status: 200, data: json };
+    } catch (err) {
+      logger.warn(`[Mountebank Shim] Failed to read imposter file: ${err.message}`);
+      return { status: 500, data: null };
     }
-    await this.manager.deleteImposter(this.manager.imposterPort);
-    await this.manager.stopMockServer();
-    this.manager = null;
-    this.mode = null;
-    logger.info('[MontebankServer] Server and imposter stopped.');
   }
 }
 

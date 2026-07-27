@@ -25,7 +25,7 @@ const runningFromAppFolder = path.basename(currentDir) === appFolderName && fs.e
 const runningFromFrameworkRootWithApp = process.env.APP && fs.existsSync(path.join(currentDir, appFolderName, 'package.json'));
 
 if (!runningFromAppFolder && !runningFromFrameworkRootWithApp) {
-  console.error(`\n❌ Error: Test execution must be run either from inside the application folder (\"${appFolderName}\") or from the framework root with APP=${appFolderName}.`);
+  console.error(`\n❌ Error: Test execution must be run either from inside the application folder ("${appFolderName}") or from the framework root with APP=${appFolderName}.`);
   console.error(`Please change your directory to the application folder or set APP to a valid subfolder and run again.\n`);
   process.exit(1);
 }
@@ -138,9 +138,9 @@ dirs.forEach(dir => {
 });
 
 // Directory variables (resolve to the actual app source location when appRoot differs)
-const featuresDirRelative = path.relative(currentDir, path.join(appRoot, 'src', 'features')).replace(/\\/g, '/');
-const stepDefinitionsDir = path.relative(currentDir, path.join(appRoot, 'src', 'step-definitions')).replace(/\\/g, '/') || 'src/step-definitions';
-const supportDir = path.relative(currentDir, path.join(appRoot, 'src', 'support')).replace(/\\/g, '/') || 'src/support';
+const _featuresDirRelative = path.relative(currentDir, path.join(appRoot, 'src', 'features')).replace(/\\/g, '/');
+const _stepDefinitionsDir = path.relative(currentDir, path.join(appRoot, 'src', 'step-definitions')).replace(/\\/g, '/') || 'src/step-definitions';
+const _supportDir = path.relative(currentDir, path.join(appRoot, 'src', 'support')).replace(/\\/g, '/') || 'src/support';
 // CLI paths (relative to the app root when the runner spawns the test processes with cwd=appRoot)
 const stepDefinitionsCli = path.posix.join('src', 'step-definitions');
 const supportDirCli = path.posix.join('src', 'support');
@@ -237,7 +237,7 @@ function findCucumberBin() {
 const cucumberBin = findCucumberBin();
 
 const defaultArgs = [];
-const defaultFeatureGlob = `${normalizedFeaturesDir}/**/*.feature`;
+const _defaultFeatureGlob = `${normalizedFeaturesDir}/**/*.feature`;
 const generatedFeaturesDir = path.join(appRoot, resultsDir, 'generated-features');
 
 function findMatchingSheetName(workbook, sheetName) {

@@ -6,7 +6,7 @@ import { componentTestHelper, logger } from 'qe-framework-core';
  * Allows recording and playing back HTTP network interactions automatically.
  */
 
-Before(async function (scenario) {
+Before(async function (_scenario) {
   // Store helper on world context so step definitions can access it
   this.componentTestHelper = componentTestHelper;
 });

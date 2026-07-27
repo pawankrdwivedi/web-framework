@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@cucumber/cucumber';
+import { When, Then } from '@cucumber/cucumber';
 import GoogleSearchPage from '../pages/google-search-page.js';
 
 When('user navigates to Google Search page', async function () {

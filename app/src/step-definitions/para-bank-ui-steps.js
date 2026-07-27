@@ -1,4 +1,4 @@
-import { Given, When, Then } from '@cucumber/cucumber';
+import { When, Then } from '@cucumber/cucumber';
 import ParaBankPage from '../pages/para-bank-page.js';
 
 When('user navigates to Para Bank Home Page', async function () {

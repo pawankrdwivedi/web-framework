@@ -290,7 +290,6 @@ class AllureReporter {
         ...summary,
       };
 
-      const summaryContent = JSON.stringify(summaryReport, null, 2);
       this.attachJson(world, summaryReport, 'Test Summary');
       return true;
     } catch (error) {
@@ -584,7 +583,7 @@ class AllureReporter {
       result = result.replace(/href="#timeline"/g, 'href="#page-timeline"');
       
       // Map tree leaf testcase hash routes to local anchor IDs
-      result = result.replace(/href="#(suites|behaviors|packages)\/([^"]+)"/g, (match, tab, rest) => {
+      result = result.replace(/href="#(suites|behaviors|packages)\/([^\x22]+)"/g, (_match, tab, rest) => {
         const cleanRest = rest.replace(/\/$/, '').replace(/\//g, '-');
         return `href="#page-tc-${tab}-${cleanRest}"`;
       });
@@ -613,7 +612,7 @@ class AllureReporter {
         }
         
         // Inject the compiled test case detail divs into the right-hand panel of the split screen
-        tabHtml = tabHtml.replace(/<div[^>]*class="[^"]*side-by-side__right[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/, (match) => {
+        tabHtml = tabHtml.replace(/<div[^>]*class="[^"]*side-by-side__right[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/, (_match) => {
           return `<div class="side-by-side__right">${testCasesHtml}</div></div>`;
         });
       }
