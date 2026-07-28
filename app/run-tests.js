@@ -416,6 +416,54 @@ function runPlaywrightTests() {
 async function main() {
   let cucumberCode = 0;
   let playwrightCode = 0;
+  let demoApiProcess = null;
+
+  // If a demo-api folder exists next to the framework, try to auto-start it so tests
+  // can record/playback network interactions. This is opt-out by setting
+  // DEMO_API_AUTO_START=false in the environment.
+  try {
+    const candidate1 = path.join(appRoot, '..', 'demo-api');
+    const candidate2 = path.join(process.cwd(), 'demo-api');
+    const demoApiExists = fs.existsSync(candidate1) || fs.existsSync(candidate2);
+    const autoStart = String(process.env.DEMO_API_AUTO_START || 'true').toLowerCase() !== 'false';
+    if (demoApiExists && autoStart) {
+      console.log('[Runner] Detected demo-api folder; starting demo API server...');
+      const demoApiPath = fs.existsSync(candidate1) ? candidate1 : candidate2;
+      demoApiProcess = spawn('npm', ['run', 'start'], {
+        cwd: demoApiPath,
+        shell: true,
+        env: { ...process.env },
+        stdio: ['ignore', 'pipe', 'pipe']
+      });
+
+      // Forward server stdout/stderr to runner logs (trimmed)
+      demoApiProcess.stdout.on('data', (d) => console.log('[demo-api]', d.toString().trim()));
+      demoApiProcess.stderr.on('data', (d) => console.error('[demo-api]', d.toString().trim()));
+
+      // Wait for server to respond on a known endpoint
+      const waitStart = Date.now();
+      const timeoutMs = 15000;
+      const healthUrl = process.env.DEMO_API_HEALTH_URL || 'http://localhost:3001/api/products';
+      let healthy = false;
+      while (Date.now() - waitStart < timeoutMs) {
+        try {
+          // node-fetch may throw if connection refused
+          const res = await fetch(healthUrl, { method: 'GET' });
+          if (res.ok || res.status === 200) { healthy = true; break; }
+        } catch (e) {
+          // ignore and retry
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
+      if (!healthy) {
+        console.warn('[Runner] demo-api did not become healthy within timeout. Tests may fail.');
+      } else {
+        console.log('[Runner] demo-api is up and responding.');
+      }
+    }
+  } catch (err) {
+    console.warn('[Runner] Could not auto-start demo-api:', err.message);
+  }
 
   if (runCucumber) {
     cucumberCode = await runCucumberTests();
@@ -426,6 +474,15 @@ async function main() {
   }
 
   const finalCode = cucumberCode !== 0 ? cucumberCode : playwrightCode;
+  // Stop demo-api if we started it
+  if (demoApiProcess && !demoApiProcess.killed) {
+    try {
+      demoApiProcess.kill();
+      console.log('[Runner] Stopped demo-api process');
+    } catch (e) {
+      // ignore
+    }
+  }
   console.log(`[Runner] Global test run completed with final exit code: ${finalCode}`);
   process.exit(finalCode);
 }
