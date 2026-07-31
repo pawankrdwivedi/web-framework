@@ -1,5 +1,5 @@
 import { chromium, firefox, webkit } from 'playwright';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import configManager from '../config/config-manager.js';
 import path from 'path';
 import fs from 'fs';

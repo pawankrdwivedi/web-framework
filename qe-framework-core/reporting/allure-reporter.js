@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 import { fileURLToPath } from 'url';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import configManager from '../config/config-manager.js';
 import { resolveFromAppRoot } from '../utils/path-resolver.js';
 
@@ -421,7 +421,7 @@ class AllureReporter {
     // Define absolute paths for input Allure report and output directories
     const reportDir = path.resolve(process.cwd(), resultsDir, 'reports/allure-report');
     const pdfDir = path.resolve(process.cwd(), resultsDir, 'pdf');
-    const htmlResultsParentDir = path.resolve(process.cwd(), resultsDir, 'html_results');
+    const htmlResultsParentDir = path.resolve(process.cwd(), resultsDir, 'html-results');
     
     logger.info(`Starting Allure Report to PDF and Static HTML conversion...`);
     

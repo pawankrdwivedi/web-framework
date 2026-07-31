@@ -1,4 +1,4 @@
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import allureReporter from '../reporting/allure-reporter.js';
 
 class PlaywrightAssertions {

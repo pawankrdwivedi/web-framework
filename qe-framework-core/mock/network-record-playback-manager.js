@@ -1,4 +1,4 @@
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import { resolveFromAppRoot } from '../utils/path-resolver.js';
 import configManager from '../config/config-manager.js';
 import fs from 'fs/promises';

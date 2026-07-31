@@ -1,5 +1,5 @@
 import assert from 'assert';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 
 class SoftAssert {
   constructor() {

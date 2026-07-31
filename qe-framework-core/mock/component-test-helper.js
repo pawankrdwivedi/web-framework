@@ -1,5 +1,5 @@
 import networkRecordPlaybackManager from './network-record-playback-manager.js';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 
 /**
  * ComponentTestHelper - Utilities for component-level UI testing via Network Record & Playback.

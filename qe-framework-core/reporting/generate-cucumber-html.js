@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import configManager from '../config/config-manager.js';
 
 export async function generateCucumberHtmlReport(opts = {}) {

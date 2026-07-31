@@ -1,6 +1,6 @@
 import browserManager from './browser-manager.js';
 import angularHelper from './angular-helper.js';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import configManager from '../config/config-manager.js';
 
 /**

@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { parse } from 'csv-parse/sync';
 import excelReader from '../data/excel-reader.js';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 
 class EtlValidator {
   /**

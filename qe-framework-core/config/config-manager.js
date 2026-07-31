@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import yaml from 'js-yaml';
-import logger from '../logger/Logger.js';
+import logger from '../logger/logger.js';
 import dotenv from 'dotenv';
 
 class ConfigManager {
