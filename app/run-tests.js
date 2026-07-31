@@ -419,7 +419,7 @@ async function main() {
 
   if (runCucumber) {
     cucumberCode = await runCucumberTests();
-    // After cucumber finishes, generate HTML using cucumber-html-reporter
+    // After cucumber finishes, generate HTML report summary
     try {
       const genPath = path.join(appRoot, 'reporting', 'generate-cucumber-html.js');
       if (fs.existsSync(genPath)) {

@@ -20,9 +20,7 @@ const baseAppPath = isRoot ? 'app' : '.';
 try {
   const searchPaths = [
     path.join(process.cwd(), '.env'),
-    path.join(process.cwd(), 'app', '.env'),
-    path.join(process.cwd(), 'app.env'),
-    path.join(process.cwd(), 'app', 'app.env')
+    path.join(process.cwd(), 'app', '.env')
   ];
   for (const envPath of searchPaths) {
     if (fs.existsSync(envPath)) {
@@ -132,10 +130,8 @@ export default defineConfig({
     VIEWPORT_HEIGHT: viewportHeight,
     RETRY: retries,
     LOGGER: process.env.LOGGER || '',
-    MOCK_DEDUPE: process.env.MOCK_DEDUPE || '',
     MOCK_RECORD: process.env.MOCK_RECORD || '',
-    MOCK_PLAYBACK: process.env.MOCK_PLAYBACK || '',
-    
+    MOCK_PLAYBACK: process.env.MOCK_PLAYBACK || '',    
     SCREENSHOT: screenshot,
     VIDEO: video,
     TRACE: trace

@@ -1,0 +1,4 @@
+ui:
+  baseUrl: http://localhost:5173/
+api:
+  baseUrl: http://localhost:3001

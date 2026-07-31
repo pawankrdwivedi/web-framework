@@ -13,7 +13,7 @@ export { default as logger } from './logger/Logger.js';
 export { default as componentTestHelper } from './mock/component-test-helper.js';
 export { default as networkRecordPlaybackManager } from './mock/network-record-playback-manager.js';
 export { default as allureReporter } from './reporting/allure-reporter.js';
-export { default as stringUtils } from './utils/string-utils.js';
+// `string-utils` removed as unused to reduce redundant code
 export {
   getChromeDownloadsPath,
   waitForPdfDownload,

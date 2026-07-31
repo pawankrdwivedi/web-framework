@@ -2,8 +2,6 @@ import fs from 'fs';
 import path from 'path';
 import logger from '../logger/Logger.js';
 import configManager from '../config/config-manager.js';
-import { createRequire } from 'module';
-import { pathToFileURL } from 'url';
 
 export async function generateCucumberHtmlReport(opts = {}) {
   try {
@@ -47,27 +45,10 @@ export async function generateCucumberHtmlReport(opts = {}) {
       }
     };
 
-    // Resolve and require `cucumber-html-reporter` from the app's node_modules
+    // Generate a minimal HTML summary directly from the JSON results
     try {
-      const require = createRequire(path.join(appRoot, 'package.json'));
-      try {
-        const reporterImpl = require('cucumber-html-reporter');
-        if (typeof reporterImpl.generate !== 'function') {
-          throw new Error('cucumber-html-reporter does not expose a generate() function');
-        }
-        reporterImpl.generate(options);
-        logger.info(`[CucumberHTML] Generated HTML report: ${htmlFile}`);
-        return true;
-      } catch (implErr) {
-        logger.warn(`[CucumberHTML] cucumber-html-reporter failed: ${implErr.message}`);
-        throw implErr;
-      }
-    } catch (e) {
-      // If the external reporter is not available, produce a minimal HTML summary
-      logger.warn('[CucumberHTML] External reporter not available, generating fallback HTML summary');
-      try {
-        const raw = fs.readFileSync(jsonFile, 'utf8');
-        const data = JSON.parse(raw);
+      const raw = fs.readFileSync(jsonFile, 'utf8');
+      const data = JSON.parse(raw);
         const scenarios = [];
         for (const feature of data) {
           const elems = feature.elements || [];
@@ -85,15 +66,13 @@ export async function generateCucumberHtmlReport(opts = {}) {
         }
         const html = `<!doctype html><html><head><meta charset="utf-8"><title>Cucumber Summary</title></head><body><h1>Cucumber Report</h1><h2>Scenarios</h2><ul>${scenarios.map(s=>`<li>${s.status.toUpperCase()}: ${s.feature} - ${s.scenario}</li>`).join('')}</ul><h3>Attachments</h3><ul>${attachmentsHtml.join('') || '<li>None</li>'}</ul></body></html>`;
         fs.mkdirSync(path.dirname(htmlFile), { recursive: true });
-        fs.writeFileSync(htmlFile, html, 'utf8');
-        logger.info(`[CucumberHTML] Generated fallback HTML report: ${htmlFile}`);
-        return true;
-      } catch (err2) {
-        throw new Error(`Failed to generate fallback HTML report: ${err2.message}`);
-      }
+      fs.writeFileSync(htmlFile, html, 'utf8');
+      logger.info(`[CucumberHTML] Generated HTML report: ${htmlFile}`);
+      return true;
+    } catch (err2) {
+      logger.error(`[CucumberHTML] Failed to generate HTML report: ${err2.message}`);
+      throw err2;
     }
-    logger.info(`[CucumberHTML] Generated HTML report: ${htmlFile}`);
-    return true;
   } catch (err) {
     logger.error(`[CucumberHTML] Failed to generate HTML report: ${err.message}`);
     return false;
