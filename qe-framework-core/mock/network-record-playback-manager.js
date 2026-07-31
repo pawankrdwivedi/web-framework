@@ -42,12 +42,10 @@ class NetworkRecordPlaybackManager {
     //this._mountebankManager = null;
 
     const execConfig = configManager.getExecutionConfig() || {};
-    const enableMountebank =
-      String(process.env.MOCK_MOUNTEBANK || execConfig.mockMountebank || execConfig.MOCK_MOUNTEBANK || 'false') === 'true';
-    const mountebankRecord =
-      String(process.env.MOCK_MOUNTEBANK_RECORD || execConfig.mockMountebankRecord || execConfig.MOCK_MOUNTEBANK_RECORD || 'false') === 'true';
-    const mountebankPlayback =
-      String(process.env.MOCK_MOUNTEBANK_PLAYBACK || execConfig.mockMountebankPlayback || execConfig.MOCK_MOUNTEBANK_PLAYBACK || 'false') === 'true';
+    const recordEnabled =
+      String(process.env.MOCK_RECORD || execConfig.MOCK_RECORD || execConfig.mockRecord || 'false') === 'true';
+    const playbackEnabled =
+      String(process.env.MOCK_PLAYBACK || execConfig.MOCK_PLAYBACK || execConfig.mockPlayback || 'false') === 'true';
     const mockInterceptPattern =
       process.env.MOCK_INTERCEPT_PATTERN || execConfig.mockInterceptPattern || execConfig.MOCK_INTERCEPT_PATTERN || '**/api/**';
 
@@ -58,18 +56,15 @@ class NetworkRecordPlaybackManager {
 
     this._mockInterceptPattern = mockInterceptPattern;
 
-    if (!enableMountebank) {
+    if (recordEnabled && playbackEnabled) {
+      const msg = '[API Mocking] Error: Both MOCK_RECORD and MOCK_PLAYBACK are set to "true". Please enable only one.';
+      logger.error(msg);
+      throw new Error(msg);
+    }
+
+    if (!recordEnabled && !playbackEnabled) {
+      // No recording or playback requested — noop
       return;
-    }
-    if (mountebankRecord && mountebankPlayback) {
-      const msg = '[API Mocking] Error: Both MOCK_MOUNTEBANK_RECORD and MOCK_MOUNTEBANK_PLAYBACK are set to "true". Please enable only one.';
-      logger.error(msg);
-      throw new Error(msg);
-    }
-    if (!mountebankRecord && !mountebankPlayback) {
-      const msg = '[API Mocking] Error: MOCK_MOUNTEBANK=true requires MOCK_MOUNTEBANK_RECORD=true or MOCK_MOUNTEBANK_PLAYBACK=true.';
-      logger.error(msg);
-      throw new Error(msg);
     }
 
     const activeScenario = scenarioName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
@@ -77,14 +72,14 @@ class NetworkRecordPlaybackManager {
     this._mockDataDir = resolveFromAppRoot(mountebankDataDir);
     this._activeScenario = activeScenario;
 
-    this._mode = mountebankRecord ? 'record' : 'playback';
-    logger.info(`[API Mocking] Hybrid Proxy ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
+    this._mode = recordEnabled ? 'record' : 'playback';
+    logger.info(`[API Mocking] Network ${this._mode.toUpperCase()} ACTIVE for scenario: ${activeScenario}`);
 
     await this._ensureMockDir();
 
     if (this._mode === 'playback') {
       if (_page) {
-        logger.info(`[API Mocking] Setting up Playwright playback routing for '${this._mockInterceptPattern}'`);
+        logger.info(`[API Mocking - Playback] Setting up Playwright routing for '${this._mockInterceptPattern}'`);
 
         await _page.route(this._mockInterceptPattern, async (route) => {
           try {
@@ -94,15 +89,19 @@ class NetworkRecordPlaybackManager {
             }
 
             const requestUrl = new URL(request.url());
-            const mockKey = this._generateMockKey(request.method(), requestUrl);
-            const mockFilePath = path.join(this._mockDataDir, `${mockKey}.json`);
+            // Save/lookup by endpoint path filename: replace '/' with '_' and trim
+            let pathPart = requestUrl.pathname.replace(/\//g, '_');
+            if (pathPart.startsWith('_')) pathPart = pathPart.substring(1);
+            if (pathPart.endsWith('_')) pathPart = pathPart.substring(0, pathPart.length - 1);
+            const endpointFile = `${pathPart}.json`;
+            const mockFilePath = path.join(this._mockDataDir, endpointFile);
 
             try {
               const fileStat = await fs.stat(mockFilePath);
               if (fileStat.isFile()) {
                 const mockContent = await fs.readFile(mockFilePath, 'utf8');
                 const mockData = JSON.parse(mockContent);
-                logger.debug(`[API Mocking] Mock Found! Fulfilling request: ${requestUrl.href} from ${mockKey}.json`);
+                logger.debug(`[API Mocking - Playback] Mock Found! Fulfilling request: ${requestUrl.href} from ${endpointFile}`);
                 return route.fulfill({
                   status: mockData.statusCode,
                   headers: mockData.headers,
@@ -113,16 +112,16 @@ class NetworkRecordPlaybackManager {
               // File not found
             }
 
-            logger.debug(`[API Mocking] Mock Not Found. Continuing to real backend: ${requestUrl.href}`);
+            logger.debug(`[API Mocking - Playback] Mock Not Found. Continuing to real backend: ${requestUrl.href}`);
             await route.continue();
           } catch (err) {
-            logger.error(`[API Mocking] Failed to route request: ${err.message}`);
+            logger.error(`[API Mocking - Playback] Failed to route request: ${err.message}`);
             await route.continue();
           }
         });
       }
     } else if (this._mode === 'record' && _page) {
-      logger.info(`[API Mocking] Setting up Playwright recording for '${this._mockInterceptPattern}'`);
+      logger.info(`[API Mocking - Record] Setting up Playwright recording for '${this._mockInterceptPattern}'`);
 
       _page.on('response', async (response) => {
         try {
@@ -137,7 +136,7 @@ class NetworkRecordPlaybackManager {
           // Skip patterns take precedence: if path matches any skip pattern, do not record.
           const shouldSkip = this._mockSkipEndpoints.some(skipPattern => requestUrl.pathname.includes(skipPattern));
           if (shouldSkip) {
-            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (matched skip pattern)`);
+            logger.debug(`[API Mocking - Record] Skipping recording for: ${requestUrl.pathname} (matched skip pattern)`);
             return;
           }
 
@@ -159,7 +158,7 @@ class NetworkRecordPlaybackManager {
           }
 
           if (responseBody.trim() === '') {
-            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (empty body)`);
+            logger.debug(`[API Mocking - Record] Skipping recording for: ${requestUrl.pathname} (empty body)`);
             return;
           }
 
@@ -169,12 +168,16 @@ class NetworkRecordPlaybackManager {
           const contentType = responseHeaders['content-type'] || '';
           if (!contentType.toLowerCase().includes('charset=utf-8') && responseBody === '') {
             // we skip non-text types unless they have stringifiable bodies? We'll keep the check.
-            logger.debug(`[API Mocking] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
+            logger.debug(`[API Mocking - Record] Skipping recording for: ${requestUrl.pathname} (content-type does not contain charset=utf-8)`);
             return;
           }
 
-          const mockKey = this._generateMockKey(request.method(), requestUrl);
-          const mockFilePath = path.join(this._mockDataDir, `${mockKey}.json`);
+          // Use endpoint-based filename when recording: /api/foo/bar -> api_foo_bar.json
+          let pathPart = requestUrl.pathname.replace(/\//g, '_');
+          if (pathPart.startsWith('_')) pathPart = pathPart.substring(1);
+          if (pathPart.endsWith('_')) pathPart = pathPart.substring(0, pathPart.length - 1);
+          const endpointFile = `${pathPart}.json`;
+          const mockFilePath = path.join(this._mockDataDir, endpointFile);
 
           const mockData = {
             method: request.method(),
@@ -191,7 +194,7 @@ class NetworkRecordPlaybackManager {
               const existingBodyLength = existingData.body ? existingData.body.length : 0;
               const newBodyLength = responseBody ? responseBody.length : 0;
               if (newBodyLength <= existingBodyLength) {
-                logger.debug(`[API Mocking] Skipping save for ${mockKey}.json, existing mock has equal or larger body.`);
+                logger.debug(`[API Mocking - Record] Skipping save for ${endpointFile}, existing mock has equal or larger body.`);
                 return;
               }
             } catch (e) {
@@ -201,16 +204,16 @@ class NetworkRecordPlaybackManager {
             const tempFilePath = `${mockFilePath}.tmp.${Date.now()}.${Math.random().toString(36).substring(2, 7)}`;
             await fs.writeFile(tempFilePath, JSON.stringify(mockData, null, 2), 'utf8');
             await fs.rename(tempFilePath, mockFilePath);
-            logger.debug(`[API Mocking] Recorded mock saved: ${mockKey}.json`);
+                logger.debug(`[API Mocking - Record] Recorded mock saved: ${endpointFile}`);
           };
 
-          const prevPromise = this._writeQueue.get(mockKey) || Promise.resolve();
+          const prevPromise = this._writeQueue.get(endpointFile) || Promise.resolve();
           const currentPromise = prevPromise.then(() => saveMock()).catch(err => {
-            logger.error(`[API Mocking] Failed to save mock ${mockKey}: ${err.message}`);
+            logger.error(`[API Mocking - Record] Failed to save mock ${endpointFile}: ${err.message}`);
           });
-          this._writeQueue.set(mockKey, currentPromise);
+          this._writeQueue.set(endpointFile, currentPromise);
         } catch (err) {
-          logger.error(`[API Mocking] Failed to record request: ${err.message}`);
+          logger.error(`[API Mocking - Record] Failed to record request: ${err.message}`);
         }
       });
     }
@@ -220,7 +223,7 @@ class NetworkRecordPlaybackManager {
     // With the new architecture, mocks are saved immediately in _page.on('response').
     // So this method doesn't need to do anything for native Playwright recording.
     if (this._mode === 'record') {
-      logger.info(`[API Mocking] Recorded mocks are saved directly to ${this._mockDataDir}`);
+      logger.info(`[API Mocking - Record] Recorded mocks are saved to ${this._mockDataDir}`);
     }
   }
 

@@ -48,8 +48,8 @@ Implements Mountebank-powered service virtualization for backend API mocking, al
 Environment variables:
 
 - `MOCK_MOUNTEBANK=true` to enable Mountebank mode
-- `MOCK_MOUNTEBANK_RECORD=true` for proxy recording mode
-- `MOCK_MOUNTEBANK_PLAYBACK=true` for playback mode
+- `MOCK_RECORD=true` for proxy recording mode
+- `MOCK_PLAYBACK=true` for playback mode
 - `MOCK_MOUNTEBANK_TARGET_URL=http://<real-backend-host>:<port>` (required in record mode)
 - `MOCK_MOUNTEBANK_ADMIN_HOST` (default `127.0.0.1`)
 - `MOCK_MOUNTEBANK_ADMIN_PORT` (default `2525`)

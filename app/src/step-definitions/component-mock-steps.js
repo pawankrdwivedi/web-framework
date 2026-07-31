@@ -14,35 +14,31 @@ Before(async function (_scenario) {
 // ============= NETWORK RECORD & PLAYBACK STEPS =============
 
 When('user initializes network record mode for scenario {string}', async function (scenarioName) {
-  process.env.MOCK_MOUNTEBANK = 'true';
-  process.env.MOCK_MOUNTEBANK_RECORD = 'true';
-  process.env.MOCK_MOUNTEBANK_PLAYBACK = 'false';
+  process.env.MOCK_RECORD = 'true';
+  process.env.MOCK_PLAYBACK = 'false';
   await this.componentTestHelper.initializeMockMode(this.page, scenarioName);
 });
 
 When('user initializes network playback mode for scenario {string}', async function (scenarioName) {
-  process.env.MOCK_MOUNTEBANK = 'true';
-  process.env.MOCK_MOUNTEBANK_RECORD = 'false';
-  process.env.MOCK_MOUNTEBANK_PLAYBACK = 'true';
+  process.env.MOCK_RECORD = 'false';
+  process.env.MOCK_PLAYBACK = 'true';
   await this.componentTestHelper.initializeMockMode(this.page, scenarioName);
-  logger.info(`Mountebank playback initialized for scenario: ${scenarioName}`);
+  logger.info(`Network playback initialized for scenario: ${scenarioName}`);
 });
 
 When('user initializes mountebank playback mode for scenario {string}', async function (scenarioName) {
-  process.env.MOCK_MOUNTEBANK = 'true';
-  process.env.MOCK_MOUNTEBANK_RECORD = 'false';
-  process.env.MOCK_MOUNTEBANK_PLAYBACK = 'true';
+  process.env.MOCK_RECORD = 'false';
+  process.env.MOCK_PLAYBACK = 'true';
   await this.componentTestHelper.initializeMockMode(this.page, scenarioName);
-  logger.info(`Mountebank playback initialized for scenario: ${scenarioName}`);
+  logger.info(`Network playback initialized for scenario: ${scenarioName}`);
 });
 
 When('user initializes mountebank record mode for scenario {string} and target {string}', async function (scenarioName, targetUrl) {
-  process.env.MOCK_MOUNTEBANK = 'true';
-  process.env.MOCK_MOUNTEBANK_RECORD = 'true';
-  process.env.MOCK_MOUNTEBANK_PLAYBACK = 'false';
+  process.env.MOCK_RECORD = 'true';
+  process.env.MOCK_PLAYBACK = 'false';
   process.env.MOCK_MOUNTEBANK_TARGET_URL = targetUrl;
   await this.componentTestHelper.initializeMockMode(this.page, scenarioName);
-  logger.info(`Mountebank record initialized for scenario: ${scenarioName}`);
+  logger.info(`Network record initialized for scenario: ${scenarioName}`);
 });
 
 When('user stops network intercept mode', async function () {

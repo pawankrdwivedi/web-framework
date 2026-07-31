@@ -133,13 +133,9 @@ export default defineConfig({
     RETRY: retries,
     LOGGER: process.env.LOGGER || '',
     MOCK_DEDUPE: process.env.MOCK_DEDUPE || '',
-    MOCK_MOUNTEBANK: process.env.MOCK_MOUNTEBANK || '',
-    MOCK_MOUNTEBANK_RECORD: process.env.MOCK_MOUNTEBANK_RECORD || '',
-    MOCK_MOUNTEBANK_PLAYBACK: process.env.MOCK_MOUNTEBANK_PLAYBACK || '',
-    MOCK_MOUNTEBANK_ADMIN_HOST: process.env.MOCK_MOUNTEBANK_ADMIN_HOST || '',
-    MOCK_MOUNTEBANK_ADMIN_PORT: process.env.MOCK_MOUNTEBANK_ADMIN_PORT || '',
-    MOCK_MOUNTEBANK_IMPOSTER_PORT: process.env.MOCK_MOUNTEBANK_IMPOSTER_PORT || '',
-    MOCK_MOUNTEBANK_TARGET_URL: process.env.MOCK_MOUNTEBANK_TARGET_URL || '',
+    MOCK_RECORD: process.env.MOCK_RECORD || '',
+    MOCK_PLAYBACK: process.env.MOCK_PLAYBACK || '',
+    
     SCREENSHOT: screenshot,
     VIDEO: video,
     TRACE: trace

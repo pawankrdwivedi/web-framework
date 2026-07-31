@@ -1,6 +1,6 @@
 {
   "name": "qe-framework-core",
-  "version": "1.0.33",
+  "version": "1.0.35",
   "description": "Enterprise-grade scalable BDD/Playwright test automation core framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -12,8 +12,7 @@
   ],
   "scripts": {
     "build": "esbuild index.js --bundle --platform=node --format=esm --outfile=dist/index.js --external:axios --external:ajv --external:ajv-formats --external:playwright --external:@playwright/test --external:mysql2 --external:oracledb --external:pg --external:tedious --external:dotenv --external:xlsx --external:csv-parse --external:js-yaml --external:@cucumber/cucumber --external:@faker-js/faker --external:winston --external:pdf-parse --minify",
-    "pack": "npm run build && npm pack",
-    "test:mountebank": "node test/run-tests-mountebank.js"
+    "pack": "npm run build && npm pack"
   },
   "peerDependencies": {
     "@cucumber/cucumber": "^10.6.0",
@@ -29,8 +28,8 @@
     "pdf-parse": "^1.1.1",
     "pg": "^8.12.0",
     "playwright": "^1.44.1",
+    "@playwright/test": "^1.44.1",
     "tedious": "^18.2.0",
-    "mountebank": "^2.9.1",
     "xlsx": "^0.18.5",
     "winston": "^3.19.0"
   },

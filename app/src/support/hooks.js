@@ -3,18 +3,12 @@ import fs from 'fs';
 import path from 'path';
 import { browserManager, logger, configManager, allureReporter, 
          softAssert, componentTestHelper } from 'qe-framework-core';
-import mountebankServer from './mountebank-server.js';
 
 const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
 logger.info(`appRoot: ${appRoot}`);
 const MOCK_ENV_KEYS = [
-  'MOCK_MOUNTEBANK',
-  'MOCK_MOUNTEBANK_RECORD',
-  'MOCK_MOUNTEBANK_PLAYBACK',
-  'MOCK_MOUNTEBANK_TARGET_URL',
-  'MOCK_MOUNTEBANK_ADMIN_HOST',
-  'MOCK_MOUNTEBANK_ADMIN_PORT',
-  'MOCK_MOUNTEBANK_IMPOSTER_PORT',
+  'MOCK_RECORD',
+  'MOCK_PLAYBACK'
 ];
 
 function captureMockEnv() {
@@ -146,9 +140,7 @@ After(async function (scenario) {
 
   }
 
-  if (this.usesMountebankServer) {
-    await mountebankServer.stop(this.persistMountebankRecording === true);
-  }
+  // No mountebank shim to stop; network mocking is handled by the record/playback manager
 
   if (this.originalMockEnv) {
     restoreMockEnv(this.originalMockEnv);

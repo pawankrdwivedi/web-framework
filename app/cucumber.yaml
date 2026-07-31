@@ -4,7 +4,7 @@ default:
     - "src/support/**/*.js"
   format:
     - "summary"
-    - "html:test-results/reports/cucumber-report.html"
+    - "json:test-results/reports/cucumber-report.json"
     - "allure-cucumberjs/reporter"
   formatOptions:
     resultsDir: "test-results/allure-results"

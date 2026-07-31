@@ -788,16 +788,16 @@ API recording/playback uses Mountebank only.
 
 ```env
 MOCK_MOUNTEBANK=true
-MOCK_MOUNTEBANK_RECORD=false
-MOCK_MOUNTEBANK_PLAYBACK=true
+MOCK_RECORD=false
+MOCK_PLAYBACK=true
 ```
 
 ### Record
 
 ```env
 MOCK_MOUNTEBANK=true
-MOCK_MOUNTEBANK_RECORD=true
-MOCK_MOUNTEBANK_PLAYBACK=false
+MOCK_RECORD=true
+MOCK_PLAYBACK=false
 MOCK_MOUNTEBANK_TARGET_URL=http://real-backend-host:8080
 ```
 

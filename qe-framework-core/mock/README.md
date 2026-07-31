@@ -5,7 +5,7 @@
 ## Supported mode flags
 
 - `MOCK_MOUNTEBANK=true`
-- `MOCK_MOUNTEBANK_RECORD=true` or `MOCK_MOUNTEBANK_PLAYBACK=true`
+- `MOCK_RECORD=true` or `MOCK_PLAYBACK=true`
 - `MOCK_MOUNTEBANK_TARGET_URL=<upstream>` (required for record mode)
 - `MOCK_MOUNTEBANK_ADMIN_HOST` (default `127.0.0.1`)
 - `MOCK_MOUNTEBANK_ADMIN_PORT` (default `2525`)
