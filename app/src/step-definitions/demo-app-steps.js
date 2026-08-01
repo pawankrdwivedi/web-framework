@@ -1,24 +1,18 @@
 import { When, Then } from '@cucumber/cucumber';
 import { expect } from '@playwright/test';
+import DemoAppPage from '../pages/demo-app-page.js';
 
 When('user navigates to the Demo App login page', async function () {
-  await this.page.goto('http://localhost:5173/login');
-  await this.page.waitForLoadState('networkidle');
+  this.demoAppPage = new DemoAppPage(this.page);
+  await this.demoAppPage.open();
 });
 
 When('user logs in with {string} and {string}', async function (username, password) {
-  await this.page.fill('input[placeholder="Username"]', username);
-  await this.page.fill('input[placeholder="Password"]', password);
-  await this.page.click('button[type="submit"]');
-  await this.page.waitForLoadState('networkidle');
+  await this.demoAppPage.login(username, password);
 });
 
 Then('the user should see the dashboard with stats', async function () {
-  const heading = this.page.locator('h2', { hasText: 'Dashboard' });
-  await expect(heading).toBeVisible();
-  
-  const sales = this.page.locator('h3', { hasText: 'Total Sales' });
-  await expect(sales).toBeVisible();
+  await this.demoAppPage.searchResultPageVisible();
 });
 
 When('user navigates to the Demo App products page', async function () {
