@@ -1,8 +1,14 @@
-import { basePage } from 'qe-framework-core';
+import { GoogleSearchPage } from './google-search-page.js';
+import { DemoAppPage } from './demo-app-page.js';
+import {ParaBankPage} from './para-bank-page.js';
 
-class PageManager extends basePage {
+class PageManager {
   constructor(page) {
-    super(page);
+    this.page = page;
+    this.googleSearchPage = new GoogleSearchPage(page);
+    this.demoAppPage = new DemoAppPage(page);
+    this.paraBankPage = new ParaBankPage(page);
+
   }
 }
 

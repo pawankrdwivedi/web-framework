@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import { browserManager, logger, configManager, allureReporter, 
          softAssert, componentTestHelper } from 'qe-framework-core';
+import PageManager from '../pages/page-manager.js';
 
 const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
 logger.info(`appRoot: ${appRoot}`);
@@ -82,6 +83,12 @@ Before(async function (scenario) {
     const { context, page } = await browserManager.createContext(this.scenarioName);
     this.context = context;
     this.page = page;
+    try {
+      this.pageManager=new PageManager(page);
+      logger.info(`Successfully initialized PageManager`);
+    } catch (err) {
+      logger.error(`Failed to initialize PageManager: ${err.message}`);
+    }
 
     // Setup console log listener for Allure attachments
     page.on('console', msg => {

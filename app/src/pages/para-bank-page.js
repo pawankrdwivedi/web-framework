@@ -1,6 +1,6 @@
 import { basePage, logger, configManager } from 'qe-framework-core';
 
-class ParaBank extends basePage {
+class ParaBankPage extends basePage {
     constructor(page) {
         super(page);
         const uiConfig = configManager.getUiConfig();
@@ -57,5 +57,5 @@ class ParaBank extends basePage {
     }   
 }
 
-export default ParaBank;
-export { ParaBank };
+export default ParaBankPage;
+export { ParaBankPage };
