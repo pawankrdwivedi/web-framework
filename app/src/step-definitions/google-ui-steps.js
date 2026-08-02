@@ -1,15 +1,14 @@
 import { When, Then } from '@cucumber/cucumber';
-import GoogleSearchPage from '../pages/google-search-page.js';
 
 When('user navigates to Google Search page', async function () {
-  this.googleSearchPage = new GoogleSearchPage(this.page);
-  await this.googleSearchPage.open();
+  
+  await this.pageManager.googleSearchPage.open();
 });
 
 When('user searches for query {string}', async function (query) {
-  await this.googleSearchPage.searchQuery(query);
+  await this.pageManager.googleSearchPage.searchQuery(query);
 });
 
 Then('search result page should be displayed with results for {string}', async function (query) {
-  await this.googleSearchPage.searchResultPageVisible(query);
+  await this.pageManager.googleSearchPage.searchResultPageVisible(query);
 });
