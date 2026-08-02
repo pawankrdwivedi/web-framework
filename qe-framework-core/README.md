@@ -41,19 +41,14 @@ A high-performance reconciliation engine that verifies:
 ### 9. `mock/` — Mocking & Service Interception
 Implements Mountebank-powered service virtualization for backend API mocking, allowing UI test suites to execute independently of actual server states.
 
-#### Mountebank record/playback
+#### API record/playback
 
 `qe-framework-core` can now orchestrate a local Mountebank server and imposter lifecycle via `networkRecordPlaybackManager`.
 
 Environment variables:
 
-- `MOCK_MOUNTEBANK=true` to enable Mountebank mode
 - `MOCK_RECORD=true` for proxy recording mode
 - `MOCK_PLAYBACK=true` for playback mode
-- `MOCK_MOUNTEBANK_TARGET_URL=http://<real-backend-host>:<port>` (required in record mode)
-- `MOCK_MOUNTEBANK_ADMIN_HOST` (default `127.0.0.1`)
-- `MOCK_MOUNTEBANK_ADMIN_PORT` (default `2525`)
-- `MOCK_MOUNTEBANK_IMPOSTER_PORT` (default `4545`)
 
 Recorded imposters are saved under:
 

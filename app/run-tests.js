@@ -421,13 +421,8 @@ async function main() {
     cucumberCode = await runCucumberTests();
     // After cucumber finishes, generate HTML report summary
     try {
-      const genPath = path.join(appRoot, 'reporting', 'generate-cucumber-html.js');
-      if (fs.existsSync(genPath)) {
-        const gen = await import(pathToFileURL(genPath).href);
-        await gen.generateCucumberHtmlReport({ appRoot });
-      } else {
-        console.warn('[Runner] Cucumber HTML generator not found; skipping HTML generation.');
-      }
+      const gen = await import('qe-framework-core/reporting/generate-cucumber-html.js');
+      await gen.generateCucumberHtmlReport({ appRoot });
     } catch (err) {
       console.warn(`[Runner] Failed to generate cucumber HTML report: ${err.message}`);
     }
