@@ -1,6 +1,6 @@
 {
   "name": "qe-framework-core",
-  "version": "1.0.39",
+  "version": "1.0.40",
   "description": "Enterprise-grade scalable BDD/Playwright test automation core framework",
   "type": "module",
   "main": "./dist/index.js",
@@ -27,8 +27,8 @@
     "oracledb": "^6.5.0",
     "pdf-parse": "^1.1.1",
     "pg": "^8.12.0",
-    "playwright": "^1.44.1",
-    "@playwright/test": "^1.44.1",
+    "playwright": "^1.62",
+    "@playwright/test": "^1.62",
     "tedious": "^18.2.0",
     "xlsx": "^0.18.5",
     "winston": "^3.19.0"
