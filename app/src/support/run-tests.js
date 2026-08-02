@@ -5,6 +5,9 @@ import { spawn } from 'child_process';
 import { fileURLToPath, pathToFileURL } from 'url';
 import xlsx from 'xlsx';
 
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
 const currentDir = process.cwd();
 
 // Load basic .env first so we can check if APP is defined
@@ -441,3 +444,5 @@ main().catch(err => {
   console.error('[Runner] Unexpected error during execution:', err);
   process.exit(1);
 });
+}
+

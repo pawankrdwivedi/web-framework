@@ -4,6 +4,11 @@ import { execSync } from 'child_process';
 
 import { allureReporter } from 'qe-framework-core';
 
+import { fileURLToPath } from 'url';
+
+const isMainModule = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMainModule) {
 // Always resolve results inside the app/ folder, regardless of where this script is invoked from
 const appRoot = path.basename(process.cwd()) === 'app'
   ? process.cwd()
@@ -51,3 +56,4 @@ console.log('[Allure] Converting generated report to PDF and Static HTML...');
     process.exit(1);
   }
 })();
+}
