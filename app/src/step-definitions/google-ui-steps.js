@@ -1,14 +1,13 @@
-import { When, Then } from '@cucumber/cucumber';
+import { When, Then } from '../support/world.js';
 
-When('user navigates to Google Search page', async function () {
-  
-  await this.pageManager.googleSearchPage.open();
+When('user navigates to Google Search page', async ({ pageManager }) => {
+  await pageManager.googleSearchPage.open();
 });
 
-When('user searches for query {string}', async function (query) {
-  await this.pageManager.googleSearchPage.searchQuery(query);
+When('user searches for query {string}', async ({ pageManager }, query) => {
+  await pageManager.googleSearchPage.searchQuery(query);
 });
 
-Then('search result page should be displayed with results for {string}', async function (query) {
-  await this.pageManager.googleSearchPage.searchResultPageVisible(query);
+Then('search result page should be displayed with results for {string}', async ({ pageManager }, query) => {
+  await pageManager.googleSearchPage.searchResultPageVisible(query);
 });

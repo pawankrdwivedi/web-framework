@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import { defineConfig, devices } from '@playwright/test';
+import { defineBddConfig } from 'playwright-bdd';
 import { configManager } from 'qe-framework-core';
 import path from 'path';
 import fs from 'fs';
@@ -78,6 +79,9 @@ const targetBrowser = (execConfig.browser || 'chromium').toLowerCase();
 const activeProject = browserMap[targetBrowser] || browserMap.chromium;
 
 const resultsDir = path.join(baseAppPath, 'test-results');
+const envFolder = process.env.ENV || 'default';
+const htmlReportDir = path.join(resultsDir, `report-${envFolder}`);
+
 const timeout = parseNumber(execConfig.timeout, 90000);
 const retries = parseNumber(execConfig.retry, 0);
 const workers = parseNumber(execConfig.parallel, 0);
@@ -89,12 +93,28 @@ const screenshot = parseMode(execConfig.screenshot, ['off', 'on', 'only-on-failu
 const video = parseMode(execConfig.video, ['off', 'on', 'retain-on-failure', 'on-first-retry'], 'retain-on-failure');
 const trace = parseMode(execConfig.trace, ['off', 'on', 'retain-on-failure', 'on-first-retry'], 'retain-on-failure');
 
-export default defineConfig({
-  // Directory where Playwright searches for tests
-  testDir: path.join(baseAppPath, 'src/test'),
+const bddTestDir = defineBddConfig({
+  features: `${baseAppPath}/test-results/generated-features/**/*.feature`,
+  steps: [
+    `${baseAppPath}/src/step-definitions/**/*.js`,
+    `${baseAppPath}/src/support/**/*.js`,
+  ],
+  outputDir: `${baseAppPath}/.features-gen`
+});
 
+const sharedUse = {
+  baseURL: uiConfig.baseUrl,
+  headless,
+  screenshot,
+  video,
+  trace,
+  viewport: { width: viewportWidth, height: viewportHeight },
+  launchOptions: { slowMo }
+};
+
+export default defineConfig({
   // Folder for test artifacts (screenshots, traces, videos, etc.)
-  outputDir: path.join(resultsDir, 'playwright-artifacts'),
+  outputDir: path.join(baseAppPath, 'test-results', 'playwright-artifacts'),
 
   // Timeout for each test in milliseconds
   timeout,
@@ -108,14 +128,13 @@ export default defineConfig({
   // Retry on CI only
   retries,
 
-  // Opt out of parallel tests on CI.
+  // Workers
   workers: workers > 0 ? workers : undefined,
 
-  // Reporter to use
+  // Reporter to use — output to test-results/report-{ENV}/
   reporter: [
     ['list'],
-    ['html', { outputFolder: path.join(resultsDir, 'reports/playwright-html'), open: 'never' }],
-    ['allure-playwright', { detail: true, resultsDir: path.join(resultsDir, 'allure-results') }]
+    ['html', { outputFolder: htmlReportDir, open: 'never' }]
   ],
 
   metadata: {
@@ -131,30 +150,29 @@ export default defineConfig({
     RETRY: retries,
     LOGGER: process.env.LOGGER || '',
     MOCK_RECORD: process.env.MOCK_RECORD || '',
-    MOCK_PLAYBACK: process.env.MOCK_PLAYBACK || '',    
+    MOCK_PLAYBACK: process.env.MOCK_PLAYBACK || '',
     SCREENSHOT: screenshot,
     VIDEO: video,
     TRACE: trace
   },
 
-  // Shared settings for all the projects below
-  use: {
-    // Base URL to use in actions like `await page.goto('/')`
-    baseURL: uiConfig.baseUrl,
+  // Shared use settings
+  use: sharedUse,
 
-    // Collect trace, screenshot, and video options matching yaml configurations
-    headless,
-    screenshot,
-    video,
-    trace,
-    viewport: { width: viewportWidth, height: viewportHeight },
-    launchOptions: {
-      slowMo
-    }
-  },
-
-  // Configure projects for major browsers
+  // Playwright Projects — one for BDD (features) and one for Hybrid (spec files)
   projects: [
-    activeProject
+    {
+      // BDD tests — testDir MUST be the bddTestDir returned by defineBddConfig
+      name: `bdd-${activeProject.name}`,
+      testDir: bddTestDir,
+      use: { ...sharedUse, ...activeProject.use }
+    },
+    {
+      // Hybrid Playwright tests
+      name: `hybrid-${activeProject.name}`,
+      testDir: path.join(baseAppPath, 'src/test'),
+      use: { ...sharedUse, ...activeProject.use }
+    }
   ],
 });
+

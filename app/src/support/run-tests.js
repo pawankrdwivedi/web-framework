@@ -347,38 +347,36 @@ function prepareGeneratedFeatures() {
   return path.relative(appRoot, generatedFeaturesDir).replace(/\\/g, '/');
 }
 
-const executionFeaturesDir = runCucumber ? prepareGeneratedFeatures() : featuresDir;
-const normalizedExecutionFeaturesDir = normalizePath(executionFeaturesDir);
-const executionFeatureGlob = `${normalizedExecutionFeaturesDir}/**/*.feature`;
+prepareGeneratedFeatures();
 
-if (!cucumberArgs.some(arg => arg.endsWith('.feature') || normalizePath(arg).startsWith(`${normalizedFeaturesDir}/`))) {
-  defaultArgs.push(executionFeatureGlob);
+// Translate cucumber tags to playwright grep
+const tagsArgs = [];
+for (let i = 0; i < cucumberArgs.length; i++) {
+  if (cucumberArgs[i] === '--tags' || cucumberArgs[i] === '-t') {
+    if (i + 1 < cucumberArgs.length) {
+      tagsArgs.push('--grep', cucumberArgs[i + 1]);
+      i++;
+    }
+  } else if (cucumberArgs[i].startsWith('@')) {
+    tagsArgs.push('--grep', cucumberArgs[i]);
+  }
 }
 
-const finalArgs = [...defaultArgs, ...cucumberArgs];
+// Combine all args for playwright
+const finalPlaywrightArgs = [...new Set([...playwrightArgs, ...tagsArgs])];
 
-if (!finalArgs.includes('--import')) {
-  finalArgs.push(
-    '--import', `${stepDefinitionsCli}/**/*.js`,
-    '--import', `${supportDirCli}/**/*.js`
-  );
-}
-  if (!finalArgs.includes('--format')) {
-  finalArgs.push(
-    '--format', `json:${resultsDir}/reports/cucumber-report.json`
-  );
-}
+function runBddGen() {
+  // Build bddgen args: pass --tags filter if any tag grep was specified
+  const bddgenArgs = ['bddgen'];
+  if (tagsArgs.length > 0) {
+    // tagsArgs is ['--grep', '\\@demo-app'], extract the raw tag for bddgen's --tags
+    const tagValue = tagsArgs[1]?.replace(/^\\@/, '@');
+    if (tagValue) bddgenArgs.push('--tags', tagValue);
+  }
 
-const retryCount = process.env.RETRY ? parseInt(process.env.RETRY, 10) : 0;
-if (retryCount > 0 && !finalArgs.includes('--retry')) {
-  finalArgs.push('--retry', retryCount.toString());
-}
-
-function runCucumberTests() {
   return new Promise((resolve) => {
-    console.log(`\n[Runner] --- Spawning Cucumber BDD Tests ---`);
-    console.log(`[Runner] Spawning Cucumber CLI: npx cucumber-js ${finalArgs.join(' ')}`);
-    const cucumberProcess = spawn('node', [cucumberBin, ...finalArgs], {
+    console.log(`\n[Runner] --- Generating BDD spec files (bddgen) ---`);
+    const bddgenProcess = spawn('npx', bddgenArgs, {
       stdio: 'inherit',
       shell: true,
       cwd: appRoot,
@@ -388,18 +386,22 @@ function runCucumberTests() {
       }
     });
 
-    cucumberProcess.on('close', (code) => {
-      console.log(`[Runner] Cucumber execution finished with exit code ${code}\n`);
+    bddgenProcess.on('close', (code) => {
+      if (code !== 0) {
+        console.warn(`[Runner] bddgen exited with code ${code}. Continuing anyway...`);
+      } else {
+        console.log(`[Runner] BDD spec files generated successfully.\n`);
+      }
       resolve(code);
     });
   });
 }
 
-function runPlaywrightTests() {
+function runTests() {
   return new Promise((resolve) => {
-    console.log(`\n[Runner] --- Spawning Playwright POM Tests ---`);
-    console.log(`[Runner] Spawning Playwright CLI: npx playwright test ${playwrightArgs.join(' ')}`);
-    const playwrightProcess = spawn('npx', ['playwright', 'test', ...playwrightArgs], {
+    console.log(`\n[Runner] --- Spawning Playwright Tests (Hybrid & BDD) ---`);
+    console.log(`[Runner] Spawning Playwright CLI: npx playwright test ${finalPlaywrightArgs.join(' ')}`);
+    const playwrightProcess = spawn('npx', ['playwright', 'test', ...finalPlaywrightArgs], {
       stdio: 'inherit',
       shell: true,
       cwd: appRoot,
@@ -417,27 +419,10 @@ function runPlaywrightTests() {
 }
 
 async function main() {
-  let cucumberCode = 0;
-  let playwrightCode = 0;
-
-  if (runCucumber) {
-    cucumberCode = await runCucumberTests();
-    // After cucumber finishes, generate HTML report summary
-    try {
-      const gen = await import('qe-framework-core/reporting/generate-cucumber-html.js');
-      await gen.generateCucumberHtmlReport({ appRoot });
-    } catch (err) {
-      console.warn(`[Runner] Failed to generate cucumber HTML report: ${err.message}`);
-    }
-  }
-
-  if (runPlaywright && cucumberCode === 0) {
-    playwrightCode = await runPlaywrightTests();
-  }
-
-  const finalCode = cucumberCode !== 0 ? cucumberCode : playwrightCode;
-  console.log(`[Runner] Global test run completed with final exit code: ${finalCode}`);
-  process.exit(finalCode);
+  await runBddGen();
+  const code = await runTests();
+  console.log(`[Runner] Global test run completed with final exit code: ${code}`);
+  process.exit(code);
 }
 
 main().catch(err => {

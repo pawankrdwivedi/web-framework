@@ -6,26 +6,14 @@
   "type": "module",
   "scripts": {
     "test": "node src/support/run-tests.js",
-    "test:cucumber": "node src/support/run-tests.js --cucumber",
-    "test:cucumber:tag": "node src/support/run-tests.js --cucumber --tags",
-    "test:cucumber:feature": "node src/support/run-tests.js --cucumber",
-    "test:cucumber:folder": "node src/support/run-tests.js --cucumber",
-    "test:playwright": "node src/support/run-tests.js --playwright",
-    "test:playwright:tag": "node src/support/run-tests.js --playwright --grep",
-    "test:playwright:spec": "node src/support/run-tests.js --playwright",
-    "test:playwright:folder": "node src/support/run-tests.js --playwright",
-    "test:playwright:ui": "npx playwright test --ui",
-    "test:playwright:config": "npx playwright test --config=playwright.config.js",
-    "test:playwright:config:ui": "npx playwright test --config=playwright.config.js --ui",
-    "test:all": "npm run test:cucumber && npm run test:playwright",
-    "allure:generate": "node src/support/generate-allure.js",
-    "allure:pdf": "node src/support/generate-allure.js",
-    "allure:open": "allure open test-results/reports/allure-report",
-    "allure": "npm run allure:generate && npm run allure:open",
+    "test:tag": "node src/support/run-tests.js",
+    "test:spec": "node src/support/run-tests.js",
+    "test:ui": "node src/support/run-tests.js --ui",
+    "test:report": "npx playwright show-report",
+    "bddgen": "npx bddgen",
     "lint": "eslint . --ext .js"
   },
   "dependencies": {
-    "@cucumber/cucumber": "^10.6.0",
     "@faker-js/faker": "^8.4.1",
     "@playwright/test": "^1.62",
     "ajv": "^8.16.0",
@@ -39,19 +27,14 @@
     "pdf-parse": "^1.1.1",
     "pg": "^8.12.0",
     "playwright": "^1.44.1",
-    "qe-framework-core": "file:qe-framework-core-1.0.40.tgz",
+    "qe-framework-core": "file:qe-framework-core-1.0.41.tgz",
     "tedious": "^18.2.0",
     "winston": "^3.13.0",
     "xlsx": "^0.18.5"
   },
-  "optionalDependencies": {},
   "devDependencies": {
-    "@playwright/test": "^1.62",
-    "allure-commandline": "^2.41.0",
-    "allure-cucumberjs": "^3.0.0-beta.10",
-    "allure-js-commons": "^3.0.0-beta.10",
-    "allure-playwright": "^3.9.0",
-    "eslint": "^8.57.0"
+    "eslint": "^8.57.0",
+    "playwright-bdd": "^9.2.0"
   },
   "engines": {
     "node": ">=18.0.0"

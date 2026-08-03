@@ -1,6 +1,6 @@
 {
   "name": "qe-framework-core",
-  "version": "1.0.40",
+  "version": "1.0.41",
   "description": "Enterprise-grade scalable BDD/Playwright test automation core framework",
   "type": "module",
   "main": "./dist/index.js",
