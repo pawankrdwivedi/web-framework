@@ -668,100 +668,191 @@ Then('welcome text should match {string}', async function (expectedText) {
 
 ## 🏃 Test Execution Commands
 
-Run your tests using the custom programmatic runner `run-tests.js` inside the root directory.
+Run your tests using the custom programmatic runner `run-tests.js` via npm scripts. The runner intelligently detects whether to execute Cucumber BDD tests, Playwright hybrid tests, or both based on the arguments provided.
+
+### 📋 Available npm Scripts
+
+| Script | Purpose |
+|--------|---------|
+| `npm run test` | Run all Cucumber BDD and Playwright tests |
+| `npm run test:tag` | Run tests by tag/grep filter |
+| `npm run test:spec` | Run tests by spec file or feature file |
+| `npm run test:ui` | Run Playwright tests in interactive UI mode |
+| `npm run test:report` | Open Playwright HTML report |
+
+---
 
 ### 1. Cucumber BDD Tests
+
 The runner compiles dynamic Excel test data, configures execution environments, and runs Cucumber CLI.
 
 #### **Run all Cucumber BDD tests**
 ```bash
-npm run test:cucumber
+npm run test
 ```
 
 #### **Run Cucumber BDD tests by Tag**
-Runs BDD scenarios matching a specific tag filter:
+Runs BDD scenarios matching a specific tag filter. The framework auto-detects tags by the `@` symbol:
 ```bash
-npm run test:cucumber:tag -- "@ui"
-```
+# Single tag
+npm run test:tag -- "@demo-app"
 
-#### **Run Cucumber BDD tests by Feature File**
-Runs scenarios targeting a specific feature file:
-```bash
-npm run test:cucumber:feature -- src/features/ui/demo-ui.feature
-```
+# Multiple tags (AND condition)
+npm run test:tag -- "@demo-app" "@smoke"
 
-#### **Run Cucumber BDD tests by Folder**
-Runs all Cucumber feature files under a specific directory:
-```bash
-npm run test:cucumber:folder -- src/features/ui/
-```
-
-#### **Specify Environment Overrides**
-Specify target environments (e.g. `sit-01`) with any command:
-```bash
-npm run test:cucumber -- --env=sit-01
+# NOT operator
+npm run test:tag -- "not @wip"
 ```
 
 > [!IMPORTANT]
 > **Windows Command Prompt vs PowerShell Quoting Rules:**
-> In Windows PowerShell, the `@` symbol is a special character used for splatting. You **must wrap tags in quotes** (e.g. `"@ui"` or `'@ui'`), otherwise PowerShell will throw a `VariableIsUndefined` error.
+> In Windows PowerShell, the `@` symbol is a special character used for splatting. You **must wrap tags in quotes** (e.g. `"@demo-app"` or `'@demo-app'`), otherwise PowerShell will throw a `VariableIsUndefined` error.
 > - **Windows PowerShell (Quoted):** 
 >   ```powershell
->   npm run test:cucumber:tag -- "@ui"
+>   npm run test:tag -- "@demo-app"
 >   ```
 > - **Windows Command Prompt (CMD) / Bash (Direct):** 
 >   ```cmd
->   npm run test:cucumber:tag -- @ui
+>   npm run test:tag -- @demo-app
 >   ```
+
+#### **Run Cucumber BDD tests by Feature File**
+Runs scenarios targeting a specific feature file or all features under a folder:
+```bash
+# Single feature file
+npm run test:spec -- "src/features/ui/demo-app.feature"
+
+# All features in a folder
+npm run test:spec -- "src/features/ui"
+```
+
+#### **Run only Cucumber (skip Playwright)**
+Force execution of only Cucumber tests, excluding Playwright hybrid tests:
+```bash
+npm run test -- --cucumber
+```
+
+#### **Specify Environment Overrides**
+Override the default environment for Cucumber tests:
+```bash
+npm run test -- --env=sit-01
+npm run test:tag -- "@demo-app" "--env=sit-01"
+```
+
+#### **Examples: Real-world Cucumber Test Scenarios**
+```bash
+# Run all @smoke tests in the demo-app
+npm run test:tag -- "@demo-app" "@smoke"
+
+# Run all demo-app tests except @wip
+npm run test:tag -- "@demo-app" "not @wip"
+
+# Run all UI tests from the demo-app feature folder
+npm run test:spec -- "src/features/ui/demo-app.feature"
+
+# Run all tests in a specific folder with a tag filter
+npm run test:tag -- "@regression" "src/features/ui"
+
+# Run tests with environment override
+npm run test:tag -- "@smoke" "--env=sit-01"
+```
 
 ---
 
 ### 2. Playwright Hybrid POM Tests
+
 The framework supports native Playwright tests (located in `src/test/`) using the same page objects, data parsers, and services.
 
-#### **Run all Playwright POM tests**
+#### **Run all Playwright tests**
 ```bash
-npm run test:playwright
+npm run test
 ```
 
-#### **Run Playwright POM tests by Tag / Grep**
-Runs POM tests matching a specific grep search filter:
+#### **Run Playwright tests by Grep Filter**
+Runs tests matching a specific test name or `@tag` annotation. The framework converts Cucumber tags (starting with `@`) to Playwright grep filters automatically:
 ```bash
-npm run test:playwright:tag -- "Execute hybrid"
+# By test name
+npm run test:tag -- "Execute hybrid"
+
+# By Cucumber tag
+npm run test:tag -- "@demo-app"
+
+# Multiple patterns (OR condition)
+npm run test:tag -- "@smoke|@regression"
 ```
 
-#### **Run Playwright POM tests by Spec File**
-Runs POM tests targeting a specific spec file:
+#### **Run Playwright tests by Spec File**
+Runs tests from a specific `.spec.js` file or folder:
 ```bash
-npm run test:playwright:spec -- src/test/hybrid-demo.spec.js
+# Single spec file
+npm run test:spec -- "src/test/hybrid-demo-app.spec.js"
+
+# All specs in a folder
+npm run test:spec -- "src/test"
 ```
 
-#### **Run Playwright POM tests by Folder**
-Runs all POM tests under a specific directory:
+#### **Run only Playwright (skip Cucumber)**
+Force execution of only Playwright tests, excluding Cucumber BDD tests:
 ```bash
-npm run test:playwright:folder -- src/test/
+npm run test -- --playwright
 ```
 
 #### **Interactive Playwright UI Runner**
-Runs Playwright tests using the interactive UI panel:
+Runs Playwright tests using the interactive UI panel with live debugging:
 ```bash
-npm run test:playwright:ui
+npm run test:ui
 ```
 
-#### **Specify Environment Overrides (Windows vs Bash)**
-Specify target environments using the `TEST_ENV` environment variable:
-- **Windows PowerShell:**
-  ```powershell
-  $env:TEST_ENV="sit-01"; npm run test:playwright
-  ```
-- **Windows Command Prompt (CMD):**
-  ```cmd
-  set TEST_ENV=sit-01 && npm run test:playwright
-  ```
-- **Bash / GitLab CI/CD:**
-  ```bash
-  TEST_ENV=sit-01 npm run test:playwright
-  ```
+#### **Specify Environment Overrides**
+Override the default environment for Playwright tests:
+```bash
+npm run test:tag -- "@demo-app" "--env=sit-01"
+npm run test:spec -- "src/test/hybrid-demo-app.spec.js" "--env=sit-01"
+```
+
+#### **Examples: Real-world Playwright Test Scenarios**
+```bash
+# Run tests matching a specific test name
+npm run test:tag -- "demo app form submission"
+
+# Run all tests with @smoke tag
+npm run test:tag -- "@smoke"
+
+# Run specific spec file
+npm run test:spec -- "src/test/hybrid-demo-app.spec.js"
+
+# Run all tests in test folder with environment override
+npm run test:spec -- "src/test" "--env=sit-01"
+
+# Run tests with both name and environment filter
+npm run test:tag -- "form submission" "--env=sit-01"
+
+# Interactive UI mode with tag filter
+npm run test:ui -- "@demo-app"
+```
+
+---
+
+### 3. Hybrid Execution: Combining Cucumber and Playwright Tests
+
+The runner automatically detects the test type and runs both when applicable. You can also mix Cucumber feature files and Playwright spec files in a single execution:
+
+```bash
+# Run both Cucumber and Playwright tests in hybrid mode
+npm run test
+
+# Mixed execution: run specific feature file and spec file together
+npm run test:spec -- "src/features/ui/demo-app.feature" "src/test/hybrid-demo-app.spec.js"
+
+# Run by tag: both Cucumber scenarios and Playwright tests with @demo-app
+npm run test:tag -- "@demo-app"
+```
+
+---
+
+### 4. Viewing Test Reports
+
+After executing tests, you can inspect execution results:
 
 ---
 
@@ -769,14 +860,81 @@ Specify target environments using the `TEST_ENV` environment variable:
 
 After executing tests, you can inspect execution results using various options:
 
-* **Playwright HTML Report**: Open `test-results/reports/playwright-html/index.html` directly in any web browser.
+* **Playwright HTML Report**: 
+  ```bash
+  npm run test:report
+  ```
+  Or open `test-results/report-{env}/index.html` directly in any web browser.
+
 * **Cucumber HTML Report**: Open `test-results/reports/cucumber-report.html` directly in any web browser.
+
 * **Allure Report**:
   ```bash
-  # Automatically compiles and displays Allure trend reports
   npm run allure
   ```
+  (Automatically compiles and displays Allure trend reports)
+
 * **Playwright Traces**: Go to `https://trace.playwright.dev/` and upload any trace `.zip` file from `test-results/reports/traces/` to visually step through the execution.
+
+---
+
+## 🔧 Advanced Execution Options
+
+### Combined Arguments
+
+You can combine multiple arguments for fine-grained test execution control:
+
+```bash
+# Run specific feature file with tag and environment filters
+npm run test:spec -- "src/features/ui/demo-app.feature" "@smoke" "--env=sit-01"
+
+# Run multiple feature files with tag filter
+npm run test:spec -- "src/features/ui" "src/features/api" "@regression"
+
+# Mix Cucumber and Playwright with tag filter
+npm run test:tag -- "@demo-app" "@smoke"
+
+# Override browser and headless settings
+npm run test -- "@regression" "--env=sit-01"
+```
+
+### Runner Detection Logic
+
+The runner (`run-tests.js`) intelligently determines which test engines to invoke:
+
+| Argument Pattern | Detected Test Type | Behavior |
+|------------------|-------------------|----------|
+| `.feature` file paths | Cucumber | Runs only Cucumber tests |
+| `@tag` (starts with `@`) | Cucumber | Runs only Cucumber tests with tag filter |
+| `.spec.js` file paths | Playwright | Runs only Playwright tests |
+| No specific arguments | Both | Runs both Cucumber and Playwright tests |
+| `--cucumber` flag | Cucumber only | Forces Cucumber-only execution |
+| `--playwright` flag | Playwright only | Forces Playwright-only execution |
+
+### Environment Variable Overrides
+
+Control execution behavior via environment variables in your `.env` file:
+
+```env
+# Application & Environment
+APP=demo-app
+ENV=sit-01
+
+# Browser Configuration
+BROWSER=Chrome              # chromium, chrome, msedge, firefox, webkit
+HEADLESS=false              # true/false
+SLOW_MO=1000                # milliseconds
+
+# Execution Settings
+PARALLEL=4                  # number of parallel workers
+TIMEOUT=90000               # milliseconds
+RETRY=2                     # retry failed tests
+
+# Reporting
+SCREENSHOT=only-on-failure  # off, on, only-on-failure
+VIDEO=retain-on-failure     # off, on, retain-on-failure, on-first-retry
+TRACE=on                    # off, on, retain-on-failure, on-first-retry
+```
 
 ---
 
