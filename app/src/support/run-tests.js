@@ -62,9 +62,6 @@ let env = process.env.ENV || 'sit-01'; // default environment
 let application = process.env.APP || undefined; // no default application
 const cleanArgs = [];
 
-let onlyCucumber = false;
-let onlyPlaywright = false;
-
 for (let i = 0; i < args.length; i++) {
   const arg = args[i];
   if (arg.startsWith('--env=')) {
@@ -77,10 +74,6 @@ for (let i = 0; i < args.length; i++) {
   } else if (arg === '--app' && i + 1 < args.length) {
     application = args[i + 1];
     i++; // skip next element
-  } else if (arg === '--cucumber') {
-    onlyCucumber = true;
-  } else if (arg === '--playwright') {
-    onlyPlaywright = true;
   } else {
     cleanArgs.push(arg);
   }
@@ -92,19 +85,8 @@ if (application) process.env.APPLICATION = application;
 console.log(`[Runner] Targeting Environment: ${env ? env.toUpperCase() : 'NONE'}`);
 console.log(`[Runner] Targeting Application: ${application ? application.toUpperCase() : 'NONE'}`);
 
-// Clean previous Allure results to avoid combined reports from previous executions
 const resultsDir = 'test-results';
 const logsDir = 'test-logs';
-
-const allureResultsPath = path.join(appRoot, resultsDir, 'allure-results');
-if (fs.existsSync(allureResultsPath)) {
-  try {
-    fs.rmSync(allureResultsPath, { recursive: true, force: true });
-    console.log('[Runner] Cleared previous Allure results.');
-  } catch (err) {
-    console.warn(`[Runner] Warning: Could not clear previous Allure results: ${err.message}`);
-  }
-}
 
 const isLoggerEnabled = String(process.env.LOGGER || '').trim().toLowerCase() === 'true';
 
@@ -126,8 +108,7 @@ if (isLoggerEnabled && fs.existsSync(logsPath)) {
 const dirs = [
   path.join(resultsDir, 'reports/screenshots'),
   path.join(resultsDir, 'reports/videos'),
-  path.join(resultsDir, 'reports/traces'),
-  path.join(resultsDir, 'allure-results')
+  path.join(resultsDir, 'reports/traces')
 ];
 
 if (isLoggerEnabled) {
@@ -149,95 +130,8 @@ const stepDefinitionsCli = path.posix.join('src', 'step-definitions');
 const supportDirCli = path.posix.join('src', 'support');
 const normalizePath = value => value.replace(/\\/g, '/').replace(/\/+$/, '');
 // When running tests, the test runner's working directory is set to the app root.
-// Use the app-root relative path for feature discovery passed to the test CLIs.
+// Use the app-root relative path for feature discovery
 const normalizedFeaturesDir = 'src/features';
-// Backwards-compatible alias used by older code paths
-const featuresDir = 'src/features';
-
-// Detect which runners to invoke based on cleanArgs
-const hasCucumberArgs = cleanArgs.some(arg =>
-  arg.endsWith('.feature') ||
-  normalizePath(arg).includes(`${normalizedFeaturesDir}/`) ||
-  arg.startsWith('@') ||
-  arg === '--tags' ||
-  arg === '-t'
-);
-
-const hasPlaywrightArgs = cleanArgs.some(arg =>
-  arg.endsWith('.spec.js') ||
-  arg.includes('test/') ||
-  arg.includes('test\\') ||
-  arg === '--grep' ||
-  arg === '-g' ||
-  arg === '--project'
-);
-
-let runCucumber = false;
-let runPlaywright = false;
-
-if (onlyCucumber) {
-  runCucumber = true;
-  runPlaywright = false;
-} else if (onlyPlaywright) {
-  runCucumber = false;
-  runPlaywright = true;
-} else if (hasCucumberArgs && !hasPlaywrightArgs) {
-  runCucumber = true;
-  runPlaywright = false;
-} else if (hasPlaywrightArgs && !hasCucumberArgs) {
-  runCucumber = false;
-  runPlaywright = true;
-} else {
-  runCucumber = true;
-  runPlaywright = true;
-}
-
-// Filter and separate argument lists
-const cucumberArgs = [];
-for (let i = 0; i < cleanArgs.length; i++) {
-  const arg = cleanArgs[i];
-  if (
-    !arg.endsWith('.spec.js') &&
-    !arg.includes('test/') &&
-    !arg.includes('test\\') &&
-    arg !== '--project'
-  ) {
-    if (arg.startsWith('@')) {
-      const prev = cucumberArgs[cucumberArgs.length - 1];
-      if (prev !== '--tags' && prev !== '-t') {
-        cucumberArgs.push('--tags');
-      }
-    }
-    cucumberArgs.push(arg);
-  }
-}
-
-const playwrightArgs = cleanArgs.filter(arg =>
-  !arg.endsWith('.feature') &&
-  !normalizePath(arg).includes(`${normalizedFeaturesDir}/`) &&
-  !arg.startsWith('@') &&
-  arg !== '--tags' &&
-  arg !== '-t'
-);
-
-function findCucumberBin() {
-  // Prefer node_modules inside the app root (when running from framework root with APP set)
-  const candidate = path.join(appRoot, 'node_modules', '@cucumber', 'cucumber', 'bin', 'cucumber-js');
-  if (fs.existsSync(candidate)) return candidate;
-
-  let dir = process.cwd();
-  while (dir) {
-    const binPath = path.join(dir, 'node_modules', '@cucumber', 'cucumber', 'bin', 'cucumber-js');
-    if (fs.existsSync(binPath)) {
-      return binPath;
-    }
-    const parent = path.dirname(dir);
-    if (parent === dir) break;
-    dir = parent;
-  }
-  return 'cucumber-js';
-}
-const cucumberBin = findCucumberBin();
 
 const defaultArgs = [];
 const _defaultFeatureGlob = `${normalizedFeaturesDir}/**/*.feature`;
@@ -349,30 +243,34 @@ function prepareGeneratedFeatures() {
 
 prepareGeneratedFeatures();
 
-// Translate cucumber tags to playwright grep
-const tagsArgs = [];
-for (let i = 0; i < cucumberArgs.length; i++) {
-  if (cucumberArgs[i] === '--tags' || cucumberArgs[i] === '-t') {
-    if (i + 1 < cucumberArgs.length) {
-      tagsArgs.push('--grep', cucumberArgs[i + 1]);
-      i++;
-    }
-  } else if (cucumberArgs[i].startsWith('@')) {
-    tagsArgs.push('--grep', cucumberArgs[i]);
+// Convert tag arguments (@tag) to --grep filters for playwright-bdd
+const finalPlaywrightArgs = [];
+
+for (let i = 0; i < cleanArgs.length; i++) {
+  const arg = cleanArgs[i];
+  
+  // Handle tags starting with @
+  if (arg.startsWith('@')) {
+    finalPlaywrightArgs.push('--grep', arg);
+  }
+  // Handle --grep arguments
+  else if (arg === '--grep' && i + 1 < cleanArgs.length) {
+    finalPlaywrightArgs.push('--grep', cleanArgs[i + 1]);
+    i++; // Skip next element since we already processed it
+  }
+  // Handle file paths and other arguments
+  else if (!arg.startsWith('--')) {
+    finalPlaywrightArgs.push(arg);
+  }
+  // Pass other flags through
+  else {
+    finalPlaywrightArgs.push(arg);
   }
 }
 
-// Combine all args for playwright
-const finalPlaywrightArgs = [...new Set([...playwrightArgs, ...tagsArgs])];
-
 function runBddGen() {
-  // Build bddgen args: pass --tags filter if any tag grep was specified
-  const bddgenArgs = ['bddgen'];
-  if (tagsArgs.length > 0) {
-    // tagsArgs is ['--grep', '\\@demo-app'], extract the raw tag for bddgen's --tags
-    const tagValue = tagsArgs[1]?.replace(/^\\@/, '@');
-    if (tagValue) bddgenArgs.push('--tags', tagValue);
-  }
+  // Build bddgen args - always generate all specs, filtering happens in playwright test
+  const bddgenArgs = ['bddgen', 'test'];
 
   return new Promise((resolve) => {
     console.log(`\n[Runner] --- Generating BDD spec files (bddgen) ---`);
@@ -387,6 +285,15 @@ function runBddGen() {
     });
 
     bddgenProcess.on('close', (code) => {
+      // Check if .features-gen was created
+      const featuresGenPath = path.join(appRoot, '.features-gen');
+      if (fs.existsSync(featuresGenPath)) {
+        const files = fs.readdirSync(featuresGenPath);
+        console.log(`[Runner] .features-gen directory created with ${files.length} files`);
+      } else {
+        console.warn(`[Runner] WARNING: .features-gen directory was not created by bddgen`);
+      }
+      
       if (code !== 0) {
         console.warn(`[Runner] bddgen exited with code ${code}. Continuing anyway...`);
       } else {
@@ -418,9 +325,29 @@ function runTests() {
   });
 }
 
+function cleanupGeneratedFeatures() {
+  const featuresGenPath = path.join(appRoot, '.features-gen');
+  if (fs.existsSync(featuresGenPath)) {
+    try {
+      fs.rmSync(featuresGenPath, { recursive: true, force: true });
+      console.log(`[Runner] Cleaned up generated features directory: ${featuresGenPath}`);
+    } catch (err) {
+      console.warn(`[Runner] Warning: Could not clean up .features-gen directory: ${err.message}`);
+    }
+  }
+}
+
 async function main() {
   await runBddGen();
   const code = await runTests();
+  
+  // Clean up .features-gen folder after test execution completes
+  // Only clean if tests were found and executed (exit code 0 or exit code from failed tests)
+  // Don't clean if exit code is 1 from "No tests found" error
+  if (code !== 1 || !fs.existsSync(path.join(appRoot, '.features-gen'))) {
+    cleanupGeneratedFeatures();
+  }
+  
   console.log(`[Runner] Global test run completed with final exit code: ${code}`);
   process.exit(code);
 }

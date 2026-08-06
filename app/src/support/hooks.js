@@ -2,8 +2,7 @@ import { Before, After, BeforeAll, AfterAll } from './world.js';
 import fs from 'fs';
 import path from 'path';
 import { browserManager, logger, configManager, 
-         softAssert, componentTestHelper } from 'qe-framework-core';
-import PageManager from '../pages/page-manager.js';
+         softAssert, componentTestHelper, networkRecordPlaybackManager } from 'qe-framework-core';
 
 const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
 logger.info(`appRoot: ${appRoot}`);
@@ -43,7 +42,7 @@ BeforeAll(async function () {
   }
 });
 
-Before(async function ({ $testInfo }) {
+Before(async function ({ $testInfo, page }) {
   this.scenarioName = $testInfo ? $testInfo.title : 'Unknown Scenario';
   this.scenarioStartTime = Date.now();
   
@@ -60,17 +59,17 @@ Before(async function ({ $testInfo }) {
   const tags = $testInfo && $testInfo.tags ? $testInfo.tags : [];
   this.originalMockEnv = captureMockEnv();
 
-  // Only initialize browser context if it is a UI scenario
-  if (tags.includes('@ui')) {
-    const { context, page } = await browserManager.createContext(this.scenarioName);
-    this.context = context;
+  // Initialize network recording/playback manager for all scenarios
+  // This must happen before any network requests are made
+  if (page) {
+    await networkRecordPlaybackManager.init(page, this.scenarioName);
+  }
+
+  // Only initialize browser logging if it is a UI scenario
+  // Browser context and page are already created by pageManager fixture in world.js
+  if (tags.includes('@ui') && page) {
+    // Store reference to page for use in hooks (pageManager fixture will use it independently)
     this.page = page;
-    try {
-      this.pageManager=new PageManager(page);
-      logger.info(`Successfully initialized PageManager`);
-    } catch (err) {
-      logger.error(`Failed to initialize PageManager: ${err.message}`);
-    }
 
     page.on('console', msg => {
       this.consoleLogs.push({
@@ -88,7 +87,7 @@ Before(async function ({ $testInfo }) {
       });
     });
   } else {
-    logger.info('Non-UI Scenario: Skipping browser initialization.');
+    logger.info('Non-UI Scenario: Skipping browser logging setup.');
   }
 });
 
@@ -101,16 +100,16 @@ After(async function ({ $testInfo }) {
     logger.info(`Scenario PASSED: "${this.scenarioName}"`);
   }
 
-  // Close context
-  if (this.context) {
-    try {
-      await componentTestHelper.stopMockMode();
-      await browserManager.closeContext(scenarioFailed, this.scenarioName);
-    } catch (err) {
-      logger.error(`Failed to close browser context: ${err.message}`);
-    }
+  // Save any recorded API mocks if recording mode was active
+  try {
+    await networkRecordPlaybackManager.saveRecordedMocks();
+    await networkRecordPlaybackManager.stop();
+  } catch (err) {
+    logger.warn(`Failed to clean up network mock recording: ${err.message}`);
   }
 
+  // Browser context closure is handled automatically by Playwright-BDD fixtures
+  // No need to manually close context here
   if (this.originalMockEnv) {
     restoreMockEnv(this.originalMockEnv);
   }

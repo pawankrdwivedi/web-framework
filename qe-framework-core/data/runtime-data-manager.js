@@ -3,7 +3,7 @@ import logger from '../logger/logger.js';
 /**
  * RuntimeDataManager — cross-scenario shared data store.
  *
- * Stores key/value pairs during Cucumber execution so that data produced
+ * Stores key/value pairs during test execution so that data produced
  * in one scenario (or step) can be consumed by any subsequent scenario.
  *
  * Usage in step definitions (via this.runtime):

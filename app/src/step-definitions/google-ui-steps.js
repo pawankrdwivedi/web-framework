@@ -4,7 +4,7 @@ When('user navigates to Google Search page', async ({ pageManager }) => {
   await pageManager.googleSearchPage.open();
 });
 
-When('user searches for query {string}', async ({ pageManager }, query) => {
+When('user searches for {string}', async ({ pageManager }, query) => {
   await pageManager.googleSearchPage.searchQuery(query);
 });
 

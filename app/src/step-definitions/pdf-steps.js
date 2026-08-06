@@ -1,5 +1,13 @@
-import { Then } from '../support/world.js';
+import { Given, When, Then } from '../support/world.js';
 import { waitForPdfDownload, verifyPdfContainsText, getChromeDownloadsPath } from 'qe-framework-core';
+
+Given('I navigate to the PDF download page', async ({ pageManager }) => {
+  await pageManager.pdfPage.open();
+});
+
+When('I click the download PDF button', async ({ pageManager }) => {
+  await pageManager.pdfPage.clickDownloadButton();
+});
 
 Then('pdf file {string} should be downloaded in Chrome Downloads path and should not be empty', async ({ world }, fileName) => {
   const downloadedPdf = await waitForPdfDownload(fileName);

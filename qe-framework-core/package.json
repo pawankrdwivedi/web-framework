@@ -1,7 +1,7 @@
 {
   "name": "qe-framework-core",
-  "version": "1.0.42",
-  "description": "Enterprise-grade scalable BDD/Playwright test automation core framework",
+  "version": "1.0.45",
+  "description": "Enterprise-grade scalable Playwright-BDD test automation core framework",
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
@@ -11,11 +11,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "esbuild index.js --bundle --platform=node --format=esm --outfile=dist/index.js --external:axios --external:ajv --external:ajv-formats --external:playwright --external:@playwright/test --external:mysql2 --external:oracledb --external:pg --external:tedious --external:dotenv --external:xlsx --external:csv-parse --external:js-yaml --external:@cucumber/cucumber --external:@faker-js/faker --external:winston --external:pdf-parse --minify",
+    "build": "esbuild index.js --bundle --platform=node --format=esm --outfile=dist/index.js --external:axios --external:ajv --external:ajv-formats --external:playwright --external:@playwright/test --external:mysql2 --external:oracledb --external:pg --external:tedious --external:dotenv --external:xlsx --external:csv-parse --external:js-yaml --external:playwright-bdd --external:@faker-js/faker --external:winston --external:pdf-parse --minify",
     "pack": "npm run build && npm pack"
   },
   "peerDependencies": {
-    "@cucumber/cucumber": "^10.6.0",
+    "playwright-bdd": "^9.0.0",
     "@faker-js/faker": "^8.4.1",
     "ajv": "^8.16.0",
     "ajv-formats": "^3.0.1",

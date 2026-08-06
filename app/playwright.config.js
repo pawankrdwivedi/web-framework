@@ -119,8 +119,8 @@ export default defineConfig({
   // Timeout for each test in milliseconds
   timeout,
 
-  // Run all tests in parallel
-  fullyParallel: true,
+  // Run all tests in parallel only if PARALLEL > 0
+  fullyParallel: workers > 0,
 
   // Fail the build on CI if you accidentally left test.only in the source code
   forbidOnly: !!process.env.CI,
@@ -128,8 +128,8 @@ export default defineConfig({
   // Retry on CI only
   retries,
 
-  // Workers
-  workers: workers > 0 ? workers : undefined,
+  // Workers: when PARALLEL = 0, run sequentially with 1 worker
+  workers: workers === 0 ? 1 : (workers > 0 ? workers : undefined),
 
   // Reporter to use — output to test-results/report-{ENV}/
   reporter: [

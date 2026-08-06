@@ -1,42 +1,42 @@
 {
-  "name": "qa-javascript-framework",
+  "name": "app-test-automation-framework",
   "version": "1.0.0",
-  "description": "Production-ready, scalable, enterprise-grade Agentic AI driven automation framework using Playwright and Cucumber BDD",
-  "main": "src/support/run-tests.js",
+  "description": "App Test Automation integrated with Enterprise-grade Playwright-BDD test automation framework",
   "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "test": "node src/support/run-tests.js",
     "test:tag": "node src/support/run-tests.js",
     "test:spec": "node src/support/run-tests.js",
     "test:ui": "node src/support/run-tests.js --ui",
-    "test:report": "npx playwright show-report",
-    "bddgen": "npx bddgen",
-    "lint": "eslint . --ext .js"
+    "test:report": "npx playwright show-report test-results/report-${npm_package_config_env:-demo-app}",
+    "bddgen": "bddgen test",
+    "lint": "eslint src --ext .js,.jsx"
   },
+  "keywords": [
+    "playwright",
+    "bdd",
+    "testing",
+    "automation",
+    "e2e",
+    "qa",
+    "gherkin"
+  ],
+  "author": "QE Team",
+  "license": "MIT",
   "dependencies": {
-    "@faker-js/faker": "^8.4.1",
-    "@playwright/test": "^1.62",
-    "ajv": "^8.16.0",
-    "ajv-formats": "^3.0.1",
-    "axios": "^1.7.2",
-    "csv-parse": "^5.5.6",
-    "dotenv": "^16.4.5",
+    "dotenv": "^16.3.1",
     "js-yaml": "^4.1.0",
-    "mysql2": "^3.10.0",
-    "oracledb": "^6.5.0",
-    "pdf-parse": "^1.1.1",
-    "pg": "^8.12.0",
-    "playwright": "^1.44.1",
-    "qe-framework-core": "file:qe-framework-core-1.0.42.tgz",
-    "tedious": "^18.2.0",
-    "winston": "^3.13.0",
-    "xlsx": "^0.18.5"
+    "playwright-bdd": "^9.2.0",
+    "qe-framework-core": "file:qe-framework-core-1.0.45.tgz"
   },
   "devDependencies": {
-    "eslint": "^8.57.0",
-    "playwright-bdd": "^9.2.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "@playwright/test": "^1.40.0",
+    "eslint": "^8.54.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-prettier": "^5.0.1",
+    "prettier": "^3.1.0"
   }
 }

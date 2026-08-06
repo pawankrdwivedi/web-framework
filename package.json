@@ -1,9 +1,0 @@
-{
-  "name": "barclays-framework-root",
-  "version": "1.0.0",
-  "private": true,
-  "scripts": {
-    "test:app": "node app/run-tests.js",
-    "test:web_app": "node app/run-tests.js --app web_app"
-  }
-}

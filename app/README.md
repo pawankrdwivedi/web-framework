@@ -1,459 +1,185 @@
-# 🚀 Enterprise-Grade Playwright + Cucumber BDD Test Automation Framework
+# 🚀 Enterprise-Grade Playwright-BDD Test Automation Framework
 
-This repository houses a production-ready, highly scalable, enterprise-grade test automation framework built using **Playwright**, **Cucumber BDD**, and **Node.js**.
+This is a production-ready, application-specific test suite built on the **qe-framework-core** library using **Playwright**, **Playwright-BDD**, and **Node.js**.
 
-It is structured to enforce a strict separation of concerns, featuring a generic core library layer (`qe-framework-core`) and an application-specific test suite layer located under the `src/` directory (containing page objects, feature files, step definitions, and environment-specific configuration files).
+It demonstrates a **strict separation of concerns**: generic, reusable components live in `qe-framework-core` (logger, API clients, DB wrappers, browser managers, assertions, ETL engines), while application-specific assets live here (page objects, feature files, step definitions, YAML configurations).
 
 ---
 
-## 🌟 Framework Core Capabilities
+## 🌟 Key Features
 
-1. **Modular Architecture & Code Split**:
-   - `qe-framework-core` (packaged core): Houses generic, reusable modules (logger, API clients, DB wrappers, browser managers, assertions, ETL engines).
-   - `src/`: Houses application-specific test assets (YAML configurations, Page Objects, Gherkin features, step definitions).
-2. **Angular App Synchronization**: Built-in support for Angular testability checks, detecting `window.getAllAngularTestabilities()` to ensure page stability before interactions, preventing flaky UI tests.
-3. **Self-Healing Locator Strategy**: An advanced locator mechanism that automatically falls back to alternative element selectors when the primary selector is broken, emitting details to the framework logger `[SelfHealing]`.
-4. **Excel-Driven Test Data**: Dynamic mapping of Cucumber `Scenario Outline` `TestCaseID`s to test data spreadsheets. Values are resolved dynamically based on the current run environment.
-5. **Unified Data Reconciliation (ETL)**: High-speed verification engines for files (CSV vs. CSV, CSV vs. DB), handling row counts, detailed cell matches, and mathematical aggregates (SUM, AVG, etc.).
-6. **Robust Soft Assertions**: Built-in `SoftAssert` utility allowing multiple assertion checkpoints to run in a single test without halting execution on the first failure.
-7. **Environment-Specific YAML Configurations & Centralized Defaults**: Centralized configuration management using a master `.env` file at the project root for common defaults, while environment-specific configurations reside inside `src/config/{env}.yaml`.
-8. **Interactive Allure & HTML Reporting**: Built-in support for Allure reports, including screenshot attachments, browser trace logs, and execution video recordings on scenario failures.
+1. **Modular Page Objects**: Leverage `BasePage` from qe-framework-core with smart selector resolution and self-healing locators
+2. **Angular App Synchronization**: Automatic async stabilization via `window.getAllAngularTestabilities()`
+3. **Self-Healing Selectors**: Fallback to alternative element selectors when primary selectors break
+4. **Excel-Driven Test Data**: Dynamic mapping of scenario test case IDs to spreadsheet values per environment
+5. **Cross-Scenario Data Sharing**: Singleton runtime store enabling one scenario to produce and another to consume data
+6. **Soft Assertions**: Multiple assertion checkpoints run to completion, failures collected and reported together
+7. **API Record/Playback**: Capture live API responses in record mode, replay mocks in playback mode for deterministic tests
+8. **High-Speed ETL**: CSV/DB data reconciliation with row counts, cell matches, and mathematical aggregates
+9. **Centralized Configuration**: `.env` for common defaults + environment-specific YAML overrides
+
+---
+
+## 📁 Project Structure
+
+```
+app/
+├── docs/                             # Non-markdown documentation (Word, Excel, etc.)
+├── src/                              # Application-specific test assets
+│   ├── config/                       # Environment-specific YAML configurations
+│   │   ├── demo-app.yaml            # UI and API endpoints for demo-app
+│   │   └── ...
+│   ├── features/                     # BDD feature files (Gherkin)
+│   │   ├── ui/
+│   │   │   ├── demo-app.feature
+│   │   │   ├── google-search.feature
+│   │   │   └── ...
+│   │   └── api/
+│   │       └── ...
+│   ├── pages/                        # Page Object Models
+│   │   ├── base-page.js             # Re-exports from qe-framework-core
+│   │   ├── demo-app-page.js
+│   │   ├── google-search-page.js
+│   │   ├── page-manager.js          # Aggregator for all pages
+│   │   └── ...
+│   ├── step-definitions/             # BDD step definitions
+│   │   ├── demo-app-ui-steps.js
+│   │   ├── google-ui-steps.js
+│   │   └── ...
+│   ├── support/                      # Playwright-BDD setup & hooks
+│   │   ├── world.js                 # Fixtures & context
+│   │   ├── hooks.js                 # Before/After lifecycle
+│   │   └── run-tests.js             # Custom test runner
+│   ├── test/                         # Playwright Spec (hybrid POM) tests
+│   │   └── hybrid-demo-app.spec.js
+│   └── test-data/                    # Excel sheets, CSV files
+│       └── source-etl.csv
+├── test-logs/                        # Execution logs
+├── test-results/                     # Screenshots, traces, videos, reports
+├── test-mock/                        # Recorded API responses (auto-generated)
+│   ├── api_login.json
+│   ├── api_dashboard_stats.json
+│   └── ...
+├── .env                              # Common execution defaults
+├── playwright.config.js              # Playwright configuration
+├── package.json                      # Dependencies & npm scripts
+└── README.md                         # This file
+```
 
 ---
 
 ## 🛠️ Technology Stack
 
-- **Core**: Node.js (ESM), JavaScript, Playwright
-- **BDD**: Cucumber.js
-- **API**: Axios with AJV (JSON Schema Validation)
-- **Database**: `pg` (Postgres), `mysql2` (MySQL), `tedious` (MSSQL), `oracledb` (Oracle)
-- **ETL & Data**: `csv-parse`, `xlsx`
-- **Config & Logs**: `js-yaml`, `winston`, `dotenv`
-- **Reporting**: `allure-playwright`, `allure-cucumberjs`
-
----
-
-## 📁 Repository Structure
-
-```text
-├── src/                        # Main source directory for application test assets
-│   ├── config/                 # Environment specific YAML configurations (sit-01, etc.)
-│   ├── features/               # Cucumber Gherkin BDD test assets
-│   ├── pages/           # Page Object Models extending BasePage
-│   ├── step-definitions/        # BDD step definition files
-│   ├── support/                # Cucumber environment hooks and World setup
-│   ├── test/                   # Playwright Spec hybrid POM tests
-│   └── test-data/              # Dynamic Excel spreadsheets & ETL source files
-├── docs/                       # Project documentation & guides
-├── test-logs/                  # Dynamic execution and self-healing anomaly logs
-├── test-results/               # Automated test results (screenshots, traces, videos, and reports)
-├── .env                        # Common default execution configurations
-├── cucumber.yaml               # Cucumber execution configuration
-├── package.json                # Project dependencies and scripts
-└── run-tests.js                # Programmatic test runner script
-```
+- **Core**: Node.js (ESM), JavaScript, Playwright v1.40+
+- **BDD**: Playwright-BDD v9.2.0
+- **API**: Axios + AJV (JSON Schema validation)
+- **Database**: PostgreSQL, MySQL, MSSQL, Oracle
+- **Data**: Excel (`xlsx`), CSV (`csv-parse`)
+- **Config**: `js-yaml`, `dotenv`, `winston`
+- **Mocking**: Playwright routing + Mountebank
 
 ---
 
 ## 🚀 Getting Started
 
 ### 1. Prerequisites
-- **Node.js**: `v18.0.0` or higher
-- **Java** (Required only for compiling and generating local Allure reports)
+
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **Playwright browsers**: Downloaded via `npx playwright install`
 
 ### 2. Installation
-To install and link the framework core library locally, run `npm install` inside the project root:
-```bash
-npm install
-```
-This will automatically configure and link the packaged core library (`"qe-framework-core": "file:qe-framework-core-1.0.10.tgz"`) as a dependency.
 
-Next, download the Playwright browser binaries:
 ```bash
+# Navigate to the app directory
+cd app
+
+# Install dependencies (automatically links qe-framework-core tarball)
+npm install
+
+# Download Playwright browser binaries
+npx playwright install
+
+# Optional: If SSL issues occur on Windows
+$env:NODE_TLS_REJECT_UNAUTHORIZED='0'
 npx playwright install
 ```
 
-> [!TIP]
-> If you encounter SSL certificate verification issues during browser binaries download, execute:
-> ```powershell
-> $env:NODE_TLS_REJECT_UNAUTHORIZED='0'
-> npx playwright install
-> ```
+### 3. Configuration
 
-### 3. Configuration Settings
-Create or modify configuration settings in the `.env` at the project root or environment-specific YAML files inside `src/config/`:
+Edit or create `.env` in the app root:
 
-* **`.env`**: Controls browser engine, headless mode, parallel execution threads, screenshot triggers, video recordings, and trace settings.
-  ```env
-  # Application Selection
-  APP=angular-test-demo
-  ENV=sit-01
+```env
+# Application & Environment
+APP=app
+ENV=demo-app
 
-  # Browser Configuration
-  BROWSER=Chrome
-  HEADLESS=false
-  SLOW_MO=0
+# Browser
+BROWSER=Chrome
+HEADLESS=false
+SLOW_MO=0
 
-  # Execution Settings
-  PARALLEL=0
-  TIMEOUT=90000
-  VIEWPORT_WIDTH=1280
-  VIEWPORT_HEIGHT=720
-  RETRY=0
+# Execution
+PARALLEL=0               # 0=sequential, N=parallel workers
+TIMEOUT=90000            # milliseconds
+RETRY=0
 
-  # Screenshot and Video Recording
-  # off, on, only-on-failure
-  SCREENSHOT=off
-  # off, on, retain-on-failure, on-first-retry
-  VIDEO=off
-  # off, on, retain-on-failure, on-first-retry
-  TRACE=off
-  # Logging in Files (true/false)
-  LOGGER=false
-  ```
+# Logging
+LOGGER=true
 
-* **`src/config/{env}.yaml`**: Controls environment-specific service endpoints, base URLs, and database configurations. For example, `src/config/sit-01.yaml`:
-  ```yaml
-  ui:
-    baseUrl: https://angular.io
-  api:
-    baseUrl: https://angular.io/api
-  database:
-    host: localhost
-    port: 5432
-    username: test
-    password: [PASSWORD]
-    name: automation_qa
-    type: postgres  
-  ```
+# API Mocking
+MOCK_RECORD=false        # true to record API responses
+MOCK_PLAYBACK=false      # true to replay recorded mocks
+MOCK_INTERCEPT_PATTERN=**/api/**
+MOCK_SKIP_ENDPOINTS=/assets/,/images/,/fonts/
 
-### 4. Local Development & Framework Packaging
-For local framework development and testing, you can package the core library and reference it directly in the test suite:
-
-1. **Generate the Package**:
-   Navigate to the core framework directory and package it:
-   ```bash
-   cd ../qe-framework-core
-   npm install
-   npm run pack
-   ```
-   This compiles, minifies, and packs the framework into a tarball (e.g., `qe-framework-core-1.0.10.tgz`).
-
-2. **Link the Package**:
-   Copy the generated tarball to the `angular-test-demo` directory, and install/link it:
-   ```bash
-   cd ../angular-test-demo
-   npm install ./qe-framework-core-1.0.10.tgz
-   ```
-   This updates the dependency reference in `package.json` to point to the local file:
-   ```json
-   "dependencies": {
-     "qe-framework-core": "file:qe-framework-core-1.0.10.tgz"
-   }
-   ```
-   Now you can import core modules directly:
-   ```javascript
-   import { excelReader, configManager, ApiClient, dbClient, logger } from 'qe-framework-core';
-   ```
-
----
-
-## Running application-specific tests (apps as subfolders)
-
-The runner `app/run-tests.js` now supports executing tests for application folders placed next to `app`, such as `web_app`.
-
-- From repository root (recommended):
-
-```powershell
-# Run the framework runner targeting the `web_app` application
-node app/run-tests.js --app web_app
-# or use the convenience npm script from repo root
-npm run test:web_app
+# Reporting
+SCREENSHOT=only-on-failure  # off, on, only-on-failure
+VIDEO=retain-on-failure     # off, on, retain-on-failure, on-first-retry
+TRACE=retain-on-failure     # off, on, retain-on-failure, on-first-retry
 ```
 
-- From inside an application directory (legacy behavior):
+Create environment-specific config: `src/config/{env}.yaml`
 
-```powershell
-cd web_app
-node ../app/run-tests.js
+```yaml
+ui:
+  baseUrl: http://localhost:5173/
+
+api:
+  baseUrl: http://localhost:3001
+
+database:
+  host: localhost
+  port: 5432
+  username: postgres
+  password: yourpassword
+  name: automation_qa
+  type: postgres
 ```
 
-Notes:
-- When the runner is executed from the repo root with `--app <name>`, it will set the child processes' `cwd` to the target app folder so the app's local `node_modules`, Playwright config, and package.json are honored.
-- Place each application as a sibling folder to `app` (e.g., `web_app`, `mobile_app`) and run the runner with `--app <folder>`.
-
 ---
 
-## 🔄 Cross-Scenario Runtime Data Manager
+## ✍️ Writing Tests
 
-The `runtimeDataManager` is a **process-level singleton** that persists key/value data for the full duration of the Cucumber test run. It lets one scenario store values (e.g. a newly created account ID, a generated token, a form submission result) and any subsequent scenario — regardless of feature file — can read those values back.
+### 1. Create Page Objects
 
-Because it is a singleton bound to the Node.js process, the store **survives** the Cucumber `World` lifecycle (which is created fresh per scenario). Scenarios execute in the order they appear in feature files / the Cucumber execution plan; data stored in an earlier scenario is always available to later ones.
-
-> [!IMPORTANT]
-> Ensure the **producing** scenario runs **before** the **consuming** scenario. Control execution order via Cucumber tags, feature file ordering in `cucumber.yaml`, or a strict scenario sequence within the same feature file.
-
----
-
-### World Binding
-
-`runtimeDataManager` is pre-bound to `this.runtime` in every Cucumber step definition via `CustomWorld`:
+Extend `BasePage` from `qe-framework-core` with smart selector syntax:
 
 ```javascript
-// src/support/world.js (already configured — no action required)
-this.runtime = runtimeDataManager;
-```
-
-No additional imports are required in step definitions.
-
----
-
-### API Reference
-
-#### Flat Store (global key/value pairs)
-
-| Method | Signature | Description |
-|---|---|---|
-| `set` | `this.runtime.set(key, value)` | Store any value under `key` |
-| `get` | `this.runtime.get(key)` | Retrieve value for `key` (`undefined` if absent) |
-| `has` | `this.runtime.has(key)` | Returns `true` if `key` exists |
-| `setAll` | `this.runtime.setAll({ key: val, ... })` | Bulk-store multiple key/value pairs |
-| `getAll` | `this.runtime.getAll()` | Plain-object snapshot of the entire store |
-| `delete` | `this.runtime.delete(key)` | Remove a single key |
-| `clear` | `this.runtime.clear()` | Wipe the flat store (optionally pass `true` to also wipe namespaces) |
-
-#### Namespaced Store (group related keys under a logical namespace)
-
-Use namespaces to avoid key collisions when multiple features share the same runtime store.
-
-| Method | Signature | Description |
-|---|---|---|
-| `setNs` | `this.runtime.setNs(ns, key, value)` | Store a value scoped to namespace `ns` |
-| `getNs` | `this.runtime.getNs(ns, key)` | Retrieve a value from namespace `ns` |
-| `hasNs` | `this.runtime.hasNs(ns, key)` | Returns `true` if `ns → key` exists |
-| `getAllNs` | `this.runtime.getAllNs(ns)` | Plain-object snapshot of one namespace |
-| `deleteNs` | `this.runtime.deleteNs(ns, key)` | Remove a single key from a namespace |
-| `clearNs` | `this.runtime.clearNs(ns)` | Wipe an entire namespace |
-
-#### Diagnostics
-
-| Method | Description |
-|---|---|
-| `this.runtime.dump()` | Debug-logs the full state of all stores to the framework logger |
-
----
-
-### Usage in Step Definitions
-
-#### Scenario 1 — Producing (storing) data
-
-```javascript
-// src/step-definitions/registration-steps.js
-import { Given, When, Then } from '@cucumber/cucumber';
-import { RegistrationPage } from '../pages/registration-page.js';
-
-When('user completes the registration form', async function () {
-  this.regPage = new RegistrationPage(this.page);
-  const userId = await this.regPage.submitRegistration(this.testData);
-
-  // Store the created userId so downstream scenarios can use it
-  this.runtime.set('registeredUserId', userId);
-  this.logger.info(`Stored registeredUserId: ${userId}`);
-});
-
-When('user completes account creation', async function () {
-  const accountId = await this.regPage.createAccount();
-
-  // Namespaced storage — avoids collision with keys from other features
-  this.runtime.setNs('registration', 'accountId', accountId);
-  this.runtime.setNs('registration', 'createdAt', new Date().toISOString());
-});
-```
-
-#### Scenario 2 — Consuming (reading) data
-
-```javascript
-// src/step-definitions/login-steps.js
-import { Given, When, Then } from '@cucumber/cucumber';
-import { LoginPage } from '../pages/login-page.js';
-
-Given('user is logged in with the registered account', async function () {
-  // Retrieve data produced by the registration scenario
-  const userId = this.runtime.get('registeredUserId');
-  this.logger.info(`Logging in with registeredUserId: ${userId}`);
-
-  this.loginPage = new LoginPage(this.page);
-  await this.loginPage.loginWithUserId(userId);
-});
-
-Then('the account dashboard should show the correct account ID', async function () {
-  // Retrieve namespaced data produced by the registration scenario
-  const accountId = this.runtime.getNs('registration', 'accountId');
-  const displayed  = await this.dashboardPage.getAccountId();
-
-  this.softAssert.assertEquals(
-    displayed,
-    accountId,
-    'Dashboard account ID matches the runtime-stored value'
-  );
-});
-```
-
----
-
-### Usage in Feature Files
-
-Order your feature files / scenarios so producers run before consumers. Use meaningful tags to group related flows:
-
-```gherkin
-# features/registration/create-account.feature
-@registration @smoke
-Scenario: User creates a new account
-  Given user is on the registration page
-  When  user completes the registration form
-  Then  a new account ID is generated and stored at runtime
-
-# features/login/login-with-new-account.feature
-@login @smoke
-Scenario: User logs in with the newly registered account
-  Given user is logged in with the registered account
-  When  user navigates to the dashboard
-  Then  the account dashboard should show the correct account ID
-```
-
-Run both scenarios together in order:
-
-```bash
-# By shared tag — Cucumber executes in feature-file order
-npm run test:cucumber:tag -- "@smoke"
-
-# Or explicitly target the folder — files processed alphabetically
-npm run test:cucumber:folder -- src/features/
-```
-
----
-
-### Storing Multiple Values at Once
-
-```javascript
-// Bulk store after a complex API call
-const responseBody = await this.api.post('/onboarding', payload);
-
-this.runtime.setAll({
-  customerId:   responseBody.customerId,
-  customerName: responseBody.fullName,
-  authToken:    responseBody.token,
-  planId:       responseBody.selectedPlan.id
-});
-```
-
-Later scenarios retrieve individual keys:
-
-```javascript
-const token    = this.runtime.get('authToken');
-const planId   = this.runtime.get('planId');
-```
-
----
-
-## 📄 PDF Download & Content Verification (Cucumber Usage)
-
-PDF validation is implemented as reusable core utilities in `qe-framework-core` and exposed through Cucumber steps in `src/step-definitions/pdf-steps.js`.
-
-### Step usage in feature files
-
-```gherkin
-Scenario: Validate downloaded statement PDF
-  Then pdf file "statement.pdf" should be downloaded in Chrome Downloads path and should not be empty
-  And downloaded pdf file should contain text "Account Summary"
-```
-
-Or in a single step:
-
-```gherkin
-Then pdf file "statement.pdf" should contain text "Account Summary"
-```
-
-### Notes
-
-- The download location defaults to Chrome's Downloads path (`%USERPROFILE%\Downloads` on Windows).
-- For custom paths, set:
-  ```env
-  CHROME_DOWNLOADS_PATH=C:\path\to\downloads
-  ```
-
----
-
-### Debugging the Runtime Store
-
-Call `dump()` in any step to print the full store contents to the logger at `debug` level:
-
-```javascript
-Then('I debug the runtime store state', function () {
-  this.runtime.dump();
-});
-```
-
-To see the output, set `LOGGER=true` and ensure the log level is `debug` in your `.env` file.
-
----
-
-## ✍️ Creating & Writing Tests
-
-The framework enforces a structured way to write scalable tests using Page Object Models and Cucumber step definitions.
-
-### 1. Page Objects
-
-Create page object models by extending `BasePage` from the core library. All `BasePage` methods accept a flexible **smart selector string** that is automatically resolved to the correct Playwright locator — no need to call `page.locator()`, `page.getByRole()`, etc. manually.
-
-#### Smart Selector Syntax
-
-| Selector String | Playwright equivalent |
-|---|---|
-| `role=button` | `page.getByRole('button')` |
-| `role=button:Submit` | `page.getByRole('button', { name: 'Submit' })` |
-| `role=button:Submit:exact` | `page.getByRole('button', { name: 'Submit', exact: true })` |
-| `text=Sign in` | `page.getByText('Sign in')` |
-| `text~=Sign in` | `page.getByText('Sign in', { exact: true })` |
-| `label=Email address` | `page.getByLabel('Email address')` |
-| `label~=Email address` | `page.getByLabel('Email address', { exact: true })` |
-| `placeholder=Enter email` | `page.getByPlaceholder('Enter email')` |
-| `testid=submit-btn` | `page.getByTestId('submit-btn')` |
-| `title=Close dialog` | `page.getByTitle('Close dialog')` |
-| `alt=Profile picture` | `page.getByAltText('Profile picture')` |
-| `xpath=//button[@id='x']` | `page.locator('xpath=//button[@id=\'x\']')` |
-| `#my-id`, `.my-class`, `div > p` | `page.locator(selector)` (CSS, with self-healing) |
-
-> [!TIP]
-> Semantic selectors (`role=`, `text=`, `label=`, etc.) are inherently resilient and skip the self-healing overhead. CSS/XPath selectors automatically activate the self-healing fallback chain when `fallbacks` are provided.
-
----
-
-#### Full Page Object Example
-
-```javascript
-import { BasePage, logger, configManager } from 'qe-framework-core';
-
-export class RegistrationPage extends BasePage {
+// src/pages/login-page.js
+import { BasePage } from 'qe-framework-core';
+import { configManager } from 'qe-framework-core';
+
+export class LoginPage extends BasePage {
   constructor(page) {
     super(page);
-    this.url = configManager.getUiConfig().baseUrl + '/register';
-
-    // ── Selectors ────────────────────────────────────────────────────────
-    // Semantic selectors — no fallbacks needed
-    this.firstNameInput  = 'label=First Name';
-    this.lastNameInput   = 'label=Last Name';
-    this.emailInput      = 'placeholder=Enter your email';
-    this.passwordInput   = 'label~=Password';           // exact match
-    this.roleDropdown    = 'role=combobox:Account Type';
-    this.termsCheckbox   = 'role=checkbox:I agree to the terms';
-    this.submitButton    = 'role=button:Create Account:exact';
-    this.successBanner   = 'text=Account created successfully';
-    this.errorAlert      = 'role=alert';
-
-    // CSS selector with self-healing fallbacks
-    this.avatarUpload    = 'input[data-testid="avatar-upload"]';
-    this.avatarFallbacks = ['input[type="file"]', '#avatar-input'];
+    this.url = configManager.getUiConfig().baseUrl + '/login';
+    
+    // Smart selectors: role=, text=, label=, placeholder=, xpath=, etc.
+    this.emailInput = 'label=Email';
+    this.passwordInput = 'label=Password';
+    this.submitButton = 'role=button:Sign In';
+    this.errorAlert = 'role=alert';
   }
 
   async open() {
@@ -461,549 +187,476 @@ export class RegistrationPage extends BasePage {
     await this.waitForNetworkIdle();
   }
 
-  async fillRegistrationForm({ firstName, lastName, email, password, role }) {
-    await this.fill(this.firstNameInput, firstName);
-    await this.fill(this.lastNameInput, lastName);
+  async login(email, password) {
     await this.fill(this.emailInput, email);
-
-    // Type character-by-character for password fields with real keydown events
-    await this.type(this.passwordInput, password, 80);
-
-    await this.selectOption(this.roleDropdown, { label: role });
-    await this.check(this.termsCheckbox);
-  }
-
-  async uploadAvatar(filePath) {
-    // CSS selector → self-healing fallback chain is activated
-    await this.uploadFile(this.avatarUpload, filePath, this.avatarFallbacks);
-  }
-
-  async submit() {
+    await this.fill(this.passwordInput, password);
     await this.click(this.submitButton);
-  }
-
-  async getSuccessMessage() {
-    await this.waitForVisible(this.successBanner);
-    return this.getText(this.successBanner);
   }
 
   async getErrorMessage() {
     await this.waitForVisible(this.errorAlert);
     return this.getText(this.errorAlert);
   }
-
-  async isSubmitEnabled() {
-    return this.isEnabled(this.submitButton);
-  }
 }
 ```
 
----
-
-#### All BasePage Methods at a Glance
-
-**Navigation**
-```javascript
-await this.navigateTo('https://example.com/login');
-await this.reload();
-await this.goBack();
-await this.goForward();
-await this.waitForURL(/dashboard/);
-await this.waitForNetworkIdle();
+**Smart Selector Types:**
+```
+role=button:Submit              → page.getByRole('button', { name: 'Submit' })
+text=Welcome                    → page.getByText('Welcome')
+text~=Welcome                   → page.getByText('Welcome', { exact: true })
+label=Email Address             → page.getByLabel('Email Address')
+placeholder=Enter email         → page.getByPlaceholder('Enter email')
+testid=login-form              → page.getByTestId('login-form')
+xpath=//button[@id='submit']    → page.locator('xpath=//button[@id="submit"]')
+#my-id, .my-class, div > p     → page.locator(selector)  [CSS, with self-healing]
 ```
 
-**Click Interactions**
-```javascript
-await this.click('role=button:Submit');
-await this.doubleClick('role=cell:Edit');
-await this.rightClick('#context-menu-target');
-await this.clickAt('role=canvas', { x: 120, y: 80 });
-await this.clickAndHold('.draggable-handle', 600);   // hold for 600ms
-```
+### 2. Write BDD Step Definitions
 
-**Keyboard & Text Input**
-```javascript
-await this.fill('label=Search', 'Playwright');       // clear then fill
-await this.type('label=OTP', '123456', 120);         // char-by-char, 120ms delay
-await this.clear('label=Search');
-await this.pressKey('label=Search', 'Enter');
-await this.pressKeyboard('Escape');                  // global key — no element needed
-await this.focus('label=Email');
-await this.blur('label=Email');
-```
-
-**Form Controls**
-```javascript
-await this.selectOption('role=combobox:Country', { label: 'India' });
-await this.selectOption('role=combobox:Roles',   ['Admin', 'Editor']);   // multi-select
-await this.check('role=checkbox:Remember me');
-await this.uncheck('role=checkbox:Remember me');
-await this.uploadFile('label=Profile Photo', '/tmp/avatar.png');
-```
-
-**Mouse / Gestures**
-```javascript
-await this.hover('role=menuitem:Settings');
-await this.dragAndDrop('#draggable', '#drop-zone');
-await this.scrollTo(0, 800);                         // absolute pixel position
-await this.scrollIntoView('text=Load more');
-```
-
-**Dialog Handling**
-```javascript
-// Register BEFORE the action that triggers the dialog
-await this.acceptDialog();
-await this.click('role=button:Delete');              // triggers alert → accepted
-
-await this.dismissDialog();
-await this.click('role=button:Leave page');          // triggers confirm → dismissed
-
-await this.acceptDialog('My prompt answer');
-await this.click('role=button:Rename');              // triggers prompt → answered
-```
-
-**Wait Conditions**
-```javascript
-await this.waitForVisible('text=Loading complete');
-await this.waitForHidden('role=progressbar');
-await this.waitForAttached('testid=data-table');
-await this.waitForText('role=status', 'Saved');
-await this.waitFor(500);                             // fixed delay (use sparingly)
-```
-
-**State Queries**
-```javascript
-const title   = await this.getPageTitle();
-const url     = this.getPageUrl();
-
-const label   = await this.getText('role=heading');
-const labels  = await this.getAllText('role=option');  // all matched elements
-const html    = await this.getHtml('.preview-area');
-const value   = await this.getInputValue('label=Email');
-const href    = await this.getAttribute('role=link:Docs', 'href');
-
-const count   = await this.getCount('role=row');
-const visible = await this.isElementVisible('text=Error');
-const enabled = await this.isEnabled('role=button:Submit');
-const checked = await this.isChecked('role=checkbox:Agree');
-const hasTxt  = await this.hasText('role=alert', 'required');
-```
-
-**Screenshots & Scripts**
-```javascript
-await this.screenshot('/tmp/full-page.png');
-await this.elementScreenshot('role=dialog', '/tmp/modal.png');
-const count = await this.executeScript(() => document.querySelectorAll('li').length);
-```
-
-**Frames (iframes)**
-```javascript
-// By frame name or URL
-const frame = this.getFrame('payment-iframe');
-await frame.locator('label=Card number').fill('4111 1111 1111 1111');
-
-// Scoped frame locator — resolveLocator syntax works inside frames too
-const frameLocator = this.getFrameLocator('#payment-iframe');
-await frameLocator.getByLabel('Card number').fill('4111 1111 1111 1111');
-```
-
----
-
-### 2. Cucumber Step Definitions
-Write steps using unified assertions, logs, and context clients accessed directly via the Cucumber `World` context (`this`):
+Import `Given`, `When`, `Then` from `world.js` and use fixture injection:
 
 ```javascript
-import { Given, When, Then } from '@cucumber/cucumber';
-import { RegistrationPage } from '../pages/registration-page.js';
+// src/step-definitions/login-steps.js
+import { Given, When, Then } from '../support/world.js';
+import { LoginPage } from '../pages/login-page.js';
 
-Given('user is on the registration page', async function () {
-  this.regPage = new RegistrationPage(this.page);
-  await this.regPage.open();
+Given('user is on the login page', async function () {
+  this.loginPage = new LoginPage(this.page);
+  await this.loginPage.open();
 });
 
-When('user fills in the registration form', async function () {
-  await this.regPage.fillRegistrationForm({
-    firstName: this.testData.firstName,
-    lastName:  this.testData.lastName,
-    email:     this.testData.email,
-    password:  this.testData.password,
-    role:      this.testData.role,
-  });
+When('user logs in with {string} and {string}', async function (email, password) {
+  await this.loginPage.login(email, password);
 });
 
-When('user submits the registration form', async function () {
-  // Verify the button is enabled before clicking
-  const canSubmit = await this.regPage.isSubmitEnabled();
-  this.softAssert.assertTrue(canSubmit, 'Submit button should be enabled before submit');
-  await this.regPage.submit();
+Then('user should see an error message', async function () {
+  const errorMsg = await this.loginPage.getErrorMessage();
+  this.softAssert.assertNotNull(errorMsg, 'Error message displayed');
 });
 
-Then('a success message should be displayed', async function () {
-  const message = await this.regPage.getSuccessMessage();
-  this.softAssert.assertEquals(message, 'Account created successfully', 'Verify success banner text');
-});
-
-Then('the page title should be {string}', async function (expectedTitle) {
-  const actual = await this.regPage.getPageTitle();
-  this.softAssert.assertEquals(actual, expectedTitle, 'Verify page title');
-});
-
-Then('registration header should be visible', async function () {
-  await this.playwrightAssert.assertElementVisible(
-    'role=heading:Registration',
-    'Verified Registration header is visible'
-  );
-});
-
-Then('welcome text should match {string}', async function (expectedText) {
+Then('the dashboard should display {string}', async function (expectedText) {
   await this.playwrightAssert.assertElementContainsText(
-    'role=alert',
+    'role=heading:Dashboard',
     expectedText,
-    'Verified welcome alert text contains expected value'
+    'Verified dashboard heading'
   );
 });
 ```
 
----
+### 3. Create Feature Files
 
-## 🏃 Test Execution Commands
+Write BDD scenarios in Gherkin:
 
-Run your tests using the custom programmatic runner `run-tests.js` via npm scripts. The runner intelligently detects whether to execute Cucumber BDD tests, Playwright hybrid tests, or both based on the arguments provided.
+```gherkin
+# src/features/ui/login.feature
+Feature: User Login
 
-### 📋 Available npm Scripts
+  @ui @smoke @demo-app
+  Scenario: Successful login with valid credentials
+    Given user is on the login page
+    When user logs in with "admin@example.com" and "password123"
+    Then the dashboard should display "Welcome"
 
-| Script | Purpose |
-|--------|---------|
-| `npm run test` | Run all Cucumber BDD and Playwright tests |
-| `npm run test:tag` | Run tests by tag/grep filter |
-| `npm run test:spec` | Run tests by spec file or feature file |
-| `npm run test:ui` | Run Playwright tests in interactive UI mode |
-| `npm run test:report` | Open Playwright HTML report |
-
----
-
-### 1. Cucumber BDD Tests
-
-The runner compiles dynamic Excel test data, configures execution environments, and runs Cucumber CLI.
-
-#### **Run all Cucumber BDD tests**
-```bash
-npm run test
+  @ui @demo-app
+  Scenario: Failed login with invalid password
+    Given user is on the login page
+    When user logs in with "admin@example.com" and "wrongpassword"
+    Then user should see an error message
 ```
 
-#### **Run Cucumber BDD tests by Tag**
-Runs BDD scenarios matching a specific tag filter. The framework auto-detects tags by the `@` symbol:
+---
+
+## 🏃 Running Tests
+
+### Basic Execution
+
+```bash
+# Run all tests
+npm run test
+
+# Run tests matching a tag
+npm run test:tag -- "@demo-app"
+
+# Run specific feature file
+npm run test:spec -- "src/features/ui/login.feature"
+
+# Interactive UI mode
+npm run test:ui
+
+# View HTML report
+npm run test:report
+```
+
+### Advanced Filtering
+
 ```bash
 # Single tag
 npm run test:tag -- "@demo-app"
 
-# Multiple tags (AND condition)
+# Multiple tags (AND)
 npm run test:tag -- "@demo-app" "@smoke"
 
-# NOT operator
+# Exclude tag (NOT)
 npm run test:tag -- "not @wip"
+
+# By test name pattern
+npm run test -- --grep "login"
 ```
 
-> [!IMPORTANT]
-> **Windows Command Prompt vs PowerShell Quoting Rules:**
-> In Windows PowerShell, the `@` symbol is a special character used for splatting. You **must wrap tags in quotes** (e.g. `"@demo-app"` or `'@demo-app'`), otherwise PowerShell will throw a `VariableIsUndefined` error.
-> - **Windows PowerShell (Quoted):** 
->   ```powershell
->   npm run test:tag -- "@demo-app"
->   ```
-> - **Windows Command Prompt (CMD) / Bash (Direct):** 
->   ```cmd
->   npm run test:tag -- @demo-app
->   ```
+> **Windows PowerShell Note**: Wrap `@` tags in quotes:
+> ```powershell
+> npm run test:tag -- "@demo-app"     # Correct
+> npm run test:tag -- @demo-app       # Throws error
+> ```
 
-#### **Run Cucumber BDD tests by Feature File**
-Runs scenarios targeting a specific feature file or all features under a folder:
+### Environment Overrides
+
 ```bash
-# Single feature file
-npm run test:spec -- "src/features/ui/demo-app.feature"
+# Override via command line
+npm run test -- --env=qa
 
-# All features in a folder
-npm run test:spec -- "src/features/ui"
-```
+# Override via .env file
+ENV=qa npm run test
 
-#### **Run only Cucumber (skip Playwright)**
-Force execution of only Cucumber tests, excluding Playwright hybrid tests:
-```bash
-npm run test -- --cucumber
-```
-
-#### **Specify Environment Overrides**
-Override the default environment for Cucumber tests:
-```bash
-npm run test -- --env=sit-01
-npm run test:tag -- "@demo-app" "--env=sit-01"
-```
-
-#### **Examples: Real-world Cucumber Test Scenarios**
-```bash
-# Run all @smoke tests in the demo-app
-npm run test:tag -- "@demo-app" "@smoke"
-
-# Run all demo-app tests except @wip
-npm run test:tag -- "@demo-app" "not @wip"
-
-# Run all UI tests from the demo-app feature folder
-npm run test:spec -- "src/features/ui/demo-app.feature"
-
-# Run all tests in a specific folder with a tag filter
-npm run test:tag -- "@regression" "src/features/ui"
-
-# Run tests with environment override
-npm run test:tag -- "@smoke" "--env=sit-01"
+# Or edit .env directly
 ```
 
 ---
 
-### 2. Playwright Hybrid POM Tests
+## 🎯 Using qe-framework-core Features
 
-The framework supports native Playwright tests (located in `src/test/`) using the same page objects, data parsers, and services.
+### Soft Assertions
 
-#### **Run all Playwright tests**
-```bash
-npm run test
+Collect multiple failures, report all at once:
+
+```javascript
+Given('user verifies account details', async function () {
+  const name = await this.accountPage.getName();
+  const email = await this.accountPage.getEmail();
+  const status = await this.accountPage.getStatus();
+
+  // All assertions run, even if first fails
+  this.softAssert.assertEquals(name, 'John Doe', 'Verify name');
+  this.softAssert.assertEquals(email, 'john@example.com', 'Verify email');
+  this.softAssert.assertEquals(status, 'Active', 'Verify status');
+
+  // Throws if any failed
+  this.softAssert.assertAll();
+});
 ```
 
-#### **Run Playwright tests by Grep Filter**
-Runs tests matching a specific test name or `@tag` annotation. The framework converts Cucumber tags (starting with `@`) to Playwright grep filters automatically:
-```bash
-# By test name
-npm run test:tag -- "Execute hybrid"
+### Cross-Scenario Data Sharing
 
-# By Cucumber tag
-npm run test:tag -- "@demo-app"
+Store data in one scenario, use in another:
 
-# Multiple patterns (OR condition)
-npm run test:tag -- "@smoke|@regression"
+```javascript
+// Scenario 1: Create account (producer)
+When('user creates account with {string}', async function (email) {
+  const accountId = await this.api.post('/api/accounts', { email });
+  this.runtime.set('newAccountId', accountId);
+});
+
+// Scenario 2: Login with new account (consumer)
+Given('user logs in with the newly created account', async function () {
+  const accountId = this.runtime.get('newAccountId');
+  await this.loginPage.loginWithAccountId(accountId);
+});
 ```
 
-#### **Run Playwright tests by Spec File**
-Runs tests from a specific `.spec.js` file or folder:
-```bash
-# Single spec file
-npm run test:spec -- "src/test/hybrid-demo-app.spec.js"
+### API Record/Playback
 
-# All specs in a folder
-npm run test:spec -- "src/test"
-```
-
-#### **Run only Playwright (skip Cucumber)**
-Force execution of only Playwright tests, excluding Cucumber BDD tests:
-```bash
-npm run test -- --playwright
-```
-
-#### **Interactive Playwright UI Runner**
-Runs Playwright tests using the interactive UI panel with live debugging:
-```bash
-npm run test:ui
-```
-
-#### **Specify Environment Overrides**
-Override the default environment for Playwright tests:
-```bash
-npm run test:tag -- "@demo-app" "--env=sit-01"
-npm run test:spec -- "src/test/hybrid-demo-app.spec.js" "--env=sit-01"
-```
-
-#### **Examples: Real-world Playwright Test Scenarios**
-```bash
-# Run tests matching a specific test name
-npm run test:tag -- "demo app form submission"
-
-# Run all tests with @smoke tag
-npm run test:tag -- "@smoke"
-
-# Run specific spec file
-npm run test:spec -- "src/test/hybrid-demo-app.spec.js"
-
-# Run all tests in test folder with environment override
-npm run test:spec -- "src/test" "--env=sit-01"
-
-# Run tests with both name and environment filter
-npm run test:tag -- "form submission" "--env=sit-01"
-
-# Interactive UI mode with tag filter
-npm run test:ui -- "@demo-app"
-```
-
----
-
-### 3. Hybrid Execution: Combining Cucumber and Playwright Tests
-
-The runner automatically detects the test type and runs both when applicable. You can also mix Cucumber feature files and Playwright spec files in a single execution:
-
-```bash
-# Run both Cucumber and Playwright tests in hybrid mode
-npm run test
-
-# Mixed execution: run specific feature file and spec file together
-npm run test:spec -- "src/features/ui/demo-app.feature" "src/test/hybrid-demo-app.spec.js"
-
-# Run by tag: both Cucumber scenarios and Playwright tests with @demo-app
-npm run test:tag -- "@demo-app"
-```
-
----
-
-### 4. Viewing Test Reports
-
-After executing tests, you can inspect execution results:
-
----
-
-## 📊 Viewing Test Reports
-
-After executing tests, you can inspect execution results using various options:
-
-* **Playwright HTML Report**: 
-  ```bash
-  npm run test:report
-  ```
-  Or open `test-results/report-{env}/index.html` directly in any web browser.
-
-* **Cucumber HTML Report**: Open `test-results/reports/cucumber-report.html` directly in any web browser.
-
-* **Allure Report**:
-  ```bash
-  npm run allure
-  ```
-  (Automatically compiles and displays Allure trend reports)
-
-* **Playwright Traces**: Go to `https://trace.playwright.dev/` and upload any trace `.zip` file from `test-results/reports/traces/` to visually step through the execution.
-
----
-
-## 🔧 Advanced Execution Options
-
-### Combined Arguments
-
-You can combine multiple arguments for fine-grained test execution control:
-
-```bash
-# Run specific feature file with tag and environment filters
-npm run test:spec -- "src/features/ui/demo-app.feature" "@smoke" "--env=sit-01"
-
-# Run multiple feature files with tag filter
-npm run test:spec -- "src/features/ui" "src/features/api" "@regression"
-
-# Mix Cucumber and Playwright with tag filter
-npm run test:tag -- "@demo-app" "@smoke"
-
-# Override browser and headless settings
-npm run test -- "@regression" "--env=sit-01"
-```
-
-### Runner Detection Logic
-
-The runner (`run-tests.js`) intelligently determines which test engines to invoke:
-
-| Argument Pattern | Detected Test Type | Behavior |
-|------------------|-------------------|----------|
-| `.feature` file paths | Cucumber | Runs only Cucumber tests |
-| `@tag` (starts with `@`) | Cucumber | Runs only Cucumber tests with tag filter |
-| `.spec.js` file paths | Playwright | Runs only Playwright tests |
-| No specific arguments | Both | Runs both Cucumber and Playwright tests |
-| `--cucumber` flag | Cucumber only | Forces Cucumber-only execution |
-| `--playwright` flag | Playwright only | Forces Playwright-only execution |
-
-### Environment Variable Overrides
-
-Control execution behavior via environment variables in your `.env` file:
+**Record mode** - Capture live API responses:
 
 ```env
-# Application & Environment
-APP=demo-app
-ENV=sit-01
-
-# Browser Configuration
-BROWSER=Chrome              # chromium, chrome, msedge, firefox, webkit
-HEADLESS=false              # true/false
-SLOW_MO=1000                # milliseconds
-
-# Execution Settings
-PARALLEL=4                  # number of parallel workers
-TIMEOUT=90000               # milliseconds
-RETRY=2                     # retry failed tests
-
-# Reporting
-SCREENSHOT=only-on-failure  # off, on, only-on-failure
-VIDEO=retain-on-failure     # off, on, retain-on-failure, on-first-retry
-TRACE=on                    # off, on, retain-on-failure, on-first-retry
+MOCK_RECORD=true
+MOCK_PLAYBACK=false
 ```
 
----
+Run tests to generate `test-mock/*.json` files.
 
-## 📡 API Record & Playback Mode (Mountebank)
-
-API recording/playback uses Mountebank only.
-
-### Playback
+**Playback mode** - Use recorded responses:
 
 ```env
-MOCK_MOUNTEBANK=true
 MOCK_RECORD=false
 MOCK_PLAYBACK=true
 ```
 
-### Record
+Tests will use mocked responses instead of hitting the real backend.
 
-```env
-MOCK_MOUNTEBANK=true
-MOCK_RECORD=true
-MOCK_PLAYBACK=false
-MOCK_MOUNTEBANK_TARGET_URL=http://real-backend-host:8080
+### Excel-Driven Test Data
+
+Map scenario test case IDs to Excel rows:
+
+```javascript
+Given('test data is loaded for {string}', async function (testCaseId) {
+  // Loads data from src/test-data/test-data.xlsx
+  this.loadExcelTestData('LoginTests', testCaseId);
+  
+  // testData is now populated from the Excel sheet
+  const email = this.testData.email;
+  const password = this.testData.password;
+});
 ```
-
-Optional overrides:
-
-```env
-MOCK_MOUNTEBANK_ADMIN_HOST=127.0.0.1
-MOCK_MOUNTEBANK_ADMIN_PORT=2525
-MOCK_MOUNTEBANK_IMPOSTER_PORT=4545
-```
-
-### 3. Mountebank/Montebank Server Demo (from `qe-framework-core`)
-
-This project includes a sample showing how to use the Mountebank server manager exposed by `qe-framework-core` through `src/support/montebank-server.js`.
-
-- Feature: `src/features/api/montebank-server-demo.feature`
-- Steps: `src/step-definitions/montebank-server-steps.js`
-- Sample imposter: `test_data_mock_data/mountebank-imposter-montebank_server_demo.json`
-
-Run only playback demo:
-
-```bash
-npm run test:cucumber -- --tags "@montebank-playback"
-```
-
-The demo starts a local Mountebank server, loads the sample imposter in playback mode, performs a request against the imposter endpoint, validates the response, and then automatically cleans up in hooks.
-
-Run record demo:
-
-```bash
-npm run test:cucumber -- --tags "@montebank-record-demo"
-```
-
-This runs proxy recording against `https://postman-echo.com`, then saves replayable stubs to:
-
-`test_data_mock_data/mountebank-imposter-montebank_server_record_demo.json`
 
 ---
 
-## 🚀 GitLab CI/CD Pipeline Integration
+## 📊 Configuration
 
-Below is a production-ready `.gitlab-ci.yml` pipeline configuration to run the test suite, isolate logs, and compile Allure trend reports:
+### .env File
+
+Controls execution defaults across all environments:
+
+```env
+# Execution Settings
+PARALLEL=0              # Workers: 0=serial, N=parallel
+TIMEOUT=90000           # Test timeout (ms)
+RETRY=0                 # Retry failed tests
+BROWSER=Chrome          # Chrome, Firefox, Safari, Edge
+HEADLESS=false          # Headless mode
+SLOW_MO=0              # Slow motion (ms per action)
+
+# Viewport
+VIEWPORT_WIDTH=1280
+VIEWPORT_HEIGHT=720
+
+# Artifacts
+SCREENSHOT=only-on-failure
+VIDEO=retain-on-failure
+TRACE=retain-on-failure
+
+# Logging
+LOGGER=true
+
+# API Mocking
+MOCK_RECORD=false
+MOCK_PLAYBACK=false
+MOCK_INTERCEPT_PATTERN=**/api/**
+MOCK_SKIP_ENDPOINTS=/assets/,/images/,/fonts/
+MOCK_RECORD_ENDPOINTS=
+```
+
+### Environment YAML (`src/config/{env}.yaml`)
+
+Override .env defaults per environment:
+
+```yaml
+# demo-app.yaml
+ui:
+  baseUrl: http://localhost:5173/
+
+api:
+  baseUrl: http://localhost:3001
+
+database:
+  type: postgres
+  host: localhost
+  port: 5432
+  username: postgres
+  password: secret
+  name: demo_db
+```
+
+---
+
+## 📡 API Record & Playback
+
+### Recording Live Responses
+
+Set environment and run tests:
+
+```env
+MOCK_RECORD=true
+MOCK_PLAYBACK=false
+MOCK_INTERCEPT_PATTERN=**/api/**
+MOCK_SKIP_ENDPOINTS=/assets/,/images/,/fonts/
+```
+
+```bash
+npm run test
+```
+
+Recorded responses save to `test-mock/`:
+```
+test-mock/
+├── api_login.json
+├── api_dashboard_stats.json
+└── api_products.json
+```
+
+### Replaying Mocks
+
+Switch to playback mode:
+
+```env
+MOCK_RECORD=false
+MOCK_PLAYBACK=true
+```
+
+```bash
+npm run test
+```
+
+All API calls hit recorded mocks; no backend server needed.
+
+---
+
+## 🔍 Debugging
+
+### Enable Logging
+
+```env
+LOGGER=true
+```
+
+Logs output to console and `test-logs/` directory.
+
+### Playwright Inspector
+
+Run in UI mode with interactive debugging:
+
+```bash
+npm run test:ui
+```
+
+### Debug a Specific Test
+
+```bash
+npm run test -- --grep "login" --ui
+```
+
+### View Traces
+
+```bash
+# After test run, view traces
+npm run test:report
+```
+
+Open trace files from `test-results/reports/traces/` at [trace.playwright.dev](https://trace.playwright.dev/)
+
+---
+
+## 📈 Reporting
+
+### HTML Report
+
+```bash
+npm run test:report
+```
+
+Opens `test-results/report-{env}/index.html` with:
+- Test results (pass/fail)
+- Screenshots on failure
+- Video recordings
+- Execution timeline
+
+### Test Logs
+
+Logs saved to `test-logs/execution-{timestamp}.log` with configurable detail level.
+
+---
+
+## 🔗 Project Dependencies
+
+### Local Dependencies
+- `qe-framework-core-1.0.44.tgz` — Core library (file-based)
+
+### NPM Dependencies
+- `playwright-bdd` v9.2.0 — BDD test runner
+- `dotenv` v16.3.1 — Environment variables
+- `js-yaml` v4.1.0 — YAML parsing
+
+All other dependencies pulled from `qe-framework-core` (axios, postgres, mysql, etc.)
+
+---
+
+## 🐛 Troubleshooting
+
+### "No tests found" error
+
+**Cause**: bddgen failed to generate test specs, usually due to missing step definitions
+
+**Solution**:
+1. Check step definition file names match pattern: `*-steps.js` in `src/step-definitions/`
+2. Ensure all Gherkin steps have corresponding step definitions
+3. Check for typos in step text
+
+### Browser won't start
+
+**Cause**: Playwright browsers not installed
+
+**Solution**:
+```bash
+npx playwright install
+```
+
+### Port conflicts
+
+**Cause**: App server already running on configured port
+
+**Solution**:
+```bash
+# Change port in src/config/{env}.yaml
+ui:
+  baseUrl: http://localhost:5174/  # Use different port
+```
+
+### Tests timeout
+
+**Cause**: TIMEOUT value too low or page waiting indefinitely
+
+**Solution**:
+```env
+TIMEOUT=120000  # Increase timeout in .env
+```
+
+---
+
+## � PDF Download & Content Verification
+
+PDF validation is implemented as reusable core utilities in `qe-framework-core` and exposed through step definitions in `src/step-definitions/pdf-steps.js`.
+
+### Step Usage
+
+Steps are automatically registered from files in `src/step-definitions/` using Playwright-BDD's `Given`, `When`, `Then` exports.
+
+### Feature File Example
+
+```gherkin
+Scenario: Validate downloaded statement PDF
+  Then pdf file "statement.pdf" should be downloaded in Chrome Downloads path and should not be empty
+  And downloaded pdf file should contain text "Account Summary"
+```
+
+### Configuration
+
+- The download location defaults to Chrome's Downloads path (`%USERPROFILE%\Downloads` on Windows).
+- For custom paths, set:
+  ```env
+  CHROME_DOWNLOADS_PATH=C:\path\to\downloads
+  ```
+
+For detailed API reference on PDF utilities, see the [qe-framework-core README](../qe-framework-core/README.md#pdf-utilities).
+
+---
+
+## 📚 Additional Resources
+
+- [Playwright Docs](https://playwright.dev/)
+- [Playwright-BDD Docs](https://github.com/vitalets/playwright-bdd)
+- [Gherkin Syntax](https://cucumber.io/docs/gherkin/)
+- [qe-framework-core README](../qe-framework-core/README.md)
+
+---
+
+## 🚀 CI/CD Integration
+
+Below is a production-ready `.gitlab-ci.yml` pipeline configuration to run the test suite and isolate logs:
 
 ```yaml
 stages:
   - install
   - test
-  - report
 
 cache:
   key: ${CI_COMMIT_REF_SLUG}
@@ -1017,41 +670,21 @@ install_dependencies:
     - npm ci
     - npx playwright install chromium
 
-run_bdd_tests:
+run_tests:
   stage: test
   image: mcr.microsoft.com/playwright:v1.44.1-jammy
   script:
-    - npm run test:cucumber
+    - npm run test
   artifacts:
     when: always
     paths:
       - test-results/
       - test-logs/
     expire_in: 7 days
-
-run_pom_tests:
-  stage: test
-  image: mcr.microsoft.com/playwright:v1.44.1-jammy
-  script:
-    - npm run test:playwright
-  artifacts:
-    when: always
-    paths:
-      - test-results/
-      - test-logs/
-    expire_in: 7 days
-
-generate_allure_report:
-  stage: report
-  image: node:18-jammy
-  before_script:
-    - apt-get update && apt-get install -y default-jdk
-    - npm install -g allure-commandline
-  script:
-    - npm run allure:generate
-  artifacts:
-    when: always
-    paths:
-      - test-results/reports/allure-report/
-    expire_in: 30 days
 ```
+
+---
+
+## 📄 License
+
+Internal use only. All rights reserved.

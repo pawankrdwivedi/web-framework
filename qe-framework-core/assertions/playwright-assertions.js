@@ -1,5 +1,4 @@
 import logger from '../logger/logger.js';
-import allureReporter from '../reporting/allure-reporter.js';
 
 class PlaywrightAssertions {
   constructor(pageOrProvider = null, world = null) {
@@ -31,23 +30,14 @@ class PlaywrightAssertions {
     return selectorOrLocator;
   }
 
-  addAllureAssertionMessage(status, message, details = '') {
-    const content = `[${status}] ${message}${details ? `\n${details}` : ''}`;
-    if (this.world) {
-      allureReporter.attachText(this.world, content, `Playwright Assertion - ${status}`);
-    }
-  }
-
   throwAssertionError(message, details = '') {
     const errorMessage = details ? `${message}\n${details}` : message;
-    this.addAllureAssertionMessage('FAILED', message, details);
     logger.error(`Playwright Assertion FAILED: ${errorMessage}`);
     throw new Error(errorMessage);
   }
 
   passAssertion(message, details = '') {
     const finalMessage = details ? `${message} | ${details}` : message;
-    this.addAllureAssertionMessage('PASSED', message, details);
     logger.info(`Playwright Assertion PASSED: ${finalMessage}`);
   }
 

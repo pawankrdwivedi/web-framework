@@ -12,7 +12,6 @@ export { default as etlValidator } from './etl/etl-validator.js';
 export { default as logger } from './logger/logger.js';
 export { default as componentTestHelper } from './mock/component-test-helper.js';
 export { default as networkRecordPlaybackManager } from './mock/network-record-playback-manager.js';
-export { default as allureReporter } from './reporting/allure-reporter.js';
 export { default as stringUtils } from './utils/string-utils.js';
 export { getChromeDownloadsPath, waitForPdfDownload, getPdfTextContent, verifyPdfContainsText,} from './utils/pdf-utils.js';
 export { getAppRoot, resolveFromAppRoot } from './utils/path-resolver.js';
