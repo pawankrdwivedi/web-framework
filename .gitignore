@@ -1,10 +1,12 @@
 .vscode
+.venv
 app/node_modules
 app/.features-gen
 app/test-logs
 app/test-mock
 app/test-results
 app/package-lock.json
+app/*.tgz
 demo-api/node_modules
 demo-api/package-lock.json
 demo-app/node_modules
@@ -12,4 +14,6 @@ demo-app/package-lock.json
 qe-framework-core/dist/
 qe-framework-core/node_modules
 qe-framework-core/package-lock.json
-
+qe-framework-core/*.tgz
+.eslintignore
+.eslintrc.json

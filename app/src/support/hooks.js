@@ -1,11 +1,9 @@
 import { Before, After, BeforeAll, AfterAll } from './world.js';
-import fs from 'fs';
 import path from 'path';
-import { browserManager, logger, configManager, 
-         softAssert, componentTestHelper, networkRecordPlaybackManager } from 'qe-framework-core';
+import { browserManager, logger, softAssert, networkRecordPlaybackManager } from 'qe-framework-core';
 
-const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
-logger.info(`appRoot: ${appRoot}`);
+//const appRoot = path.basename(process.cwd()) === 'app' ? process.cwd() : path.join(process.cwd(), 'app');
+//logger.info(`appRoot: ${appRoot}`);
 const MOCK_ENV_KEYS = [
   'MOCK_RECORD',
   'MOCK_PLAYBACK'
@@ -29,12 +27,13 @@ function restoreMockEnv(snapshot) {
   }
 }
 
-const timeoutMs = configManager.getExecutionConfig().timeout;
-logger.info(`timeoutMs: ${JSON.stringify(configManager.getExecutionConfig())}`);
+//const timeoutMs = configManager.getExecutionConfig().timeout;
+//logger.info(`timeoutMs: ${JSON.stringify(configManager.getExecutionConfig())}`);
 
 BeforeAll(async function () {
+  logger.info(`------------------------------------------------------------`);
   logger.info('Starting Global Test Execution Setup');
-  
+  logger.info(`------------------------------------------------------------`);  
   try {
     //await dbClient.connect();
   } catch (err) {
@@ -95,9 +94,14 @@ After(async function ({ $testInfo }) {
   const scenarioFailed = $testInfo ? $testInfo.status !== 'passed' && $testInfo.status !== 'skipped' : false;
   
   if (scenarioFailed) {
+    logger.error(`------------------------------------------------------------`);
     logger.error(`Scenario FAILED: "${this.scenarioName}"`);
+    logger.error(`------------------------------------------------------------`);
+  
   } else {
+    logger.info(`------------------------------------------------------------`);
     logger.info(`Scenario PASSED: "${this.scenarioName}"`);
+    logger.info(`------------------------------------------------------------`);
   }
 
   // Save any recorded API mocks if recording mode was active
@@ -126,7 +130,9 @@ After(async function ({ $testInfo }) {
 });
 
 AfterAll(async function () {
+  logger.info(`------------------------------------------------------------`);
   logger.info('Tearing down Global Test Execution');
+  logger.info(`------------------------------------------------------------`);
   await browserManager.closeBrowser();
   //await dbClient.disconnect();
 });

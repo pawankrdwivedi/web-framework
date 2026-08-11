@@ -1,14 +1,13 @@
-import { basePage, logger, configManager, runtimeDataManager } from 'qe-framework-core';
+import { basePage, configManager, runtimeDataManager } from 'qe-framework-core';
 
 class GoogleSearchPage extends basePage {
   constructor(page) {
     super(page);
     const uiConfig = configManager.getUiConfig();
     this.searchUrl = uiConfig.baseUrl || 'https://www.google.com/search?q=';
-    this.searchQuery='#APjFqb';
     
     // Locators
-    // Primary is intentionally broken to trigger self-healing
+    this.searchQuery='#APjFqb';
   }
 
   async open() {
@@ -18,7 +17,6 @@ class GoogleSearchPage extends basePage {
   }
 
   async searchQuery(query) {
-    logger.info(`Performing Google Search for: "${query}"`);
     await this.fill(this.searchQuery, query);
     // Press Enter to submit search (more reliable than clicking the button)
     await this.pressKey(this.searchQuery, 'Enter');
@@ -29,7 +27,6 @@ class GoogleSearchPage extends basePage {
     await this.waitFor(30000);
     runtimeDataManager.set('searchQuery', query);
     //PlaywrightAssertions.assertPageTitleContains(query);
-    logger.info(`Search results for "${runtimeDataManager.get('searchQuery')}" are displayed.`);
   }
 }
 

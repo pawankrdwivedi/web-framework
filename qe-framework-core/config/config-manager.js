@@ -26,7 +26,7 @@ class ConfigManager {
       for (const envPath of searchPaths) {
         if (fs.existsSync(envPath)) {
           const result = dotenv.config({ path: envPath });
-          logger.info(`Loaded environment file: ${envPath}`);
+          //logger.info(`Loaded environment file: ${envPath}`);
           parsed = { ...parsed, ...(result.parsed || {}) };
           loadedAny = true;
         }
@@ -36,11 +36,11 @@ class ConfigManager {
         logger.warn('No environment configuration file found (.env or app.env), using system environment variables');
       }
       
-      logger.info('--- Environment Variables Loaded ---');
+      //logger.info('--- Environment Variables Loaded ---');
       for (const [key, value] of Object.entries(parsed)) {
-        logger.info(`ENV: ${key} = ${value}`);
+        //logger.info(`ENV: ${key} = ${value}`);
       }
-      logger.info('------------------------------------');
+      //logger.info('------------------------------------');
       
       return parsed;
     } catch (error) {
@@ -54,7 +54,7 @@ class ConfigManager {
     if (!envFromFile) {
       throw new Error('ENV variable is missing in .env file');
     }
-    logger.info(`Environment determined from .env file: ${envFromFile}`);
+    //logger.info(`Environment determined from .env file: ${envFromFile}`);
     return envFromFile.toLowerCase();
   }
 
@@ -63,7 +63,7 @@ class ConfigManager {
     if (!applicationFromFile) {
       throw new Error('APP variable is missing in .env file');
     }
-    logger.info(`Application determined from .env file: ${applicationFromFile}`);
+    //logger.info(`Application determined from .env file: ${applicationFromFile}`);
     return applicationFromFile.toLowerCase();
   }
 
@@ -80,19 +80,18 @@ class ConfigManager {
       if (!fs.existsSync(configFilePath)) {
         throw new Error(`Configuration file not found at: ${configFilePath}`);
       }
-
-      logger.info(`Loading configuration for application: ${this.application || 'undefined'}, environment: ${this.env.toUpperCase()}`);
+      logger.info('--- YAML Configuration Loaded ---');
+      logger.info(`Application: ${this.application.toUpperCase() || 'undefined'}, Environment: ${this.env.toUpperCase()}`);
       const fileContents = fs.readFileSync(configFilePath, 'utf8');
       this.config = yaml.load(fileContents);
       
-      logger.info('--- YAML Configuration Loaded ---');
       const flattenObj = (obj, prefix = '') => {
         if (!obj) return;
         for (const [key, value] of Object.entries(obj)) {
           if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
             flattenObj(value, `${prefix}${key}.`);
           } else {
-            logger.info(`YAML: ${prefix}${key} = ${value}`);
+            //logger.info(`YAML: ${prefix}${key} = ${value}`);
           }
         }
       };
